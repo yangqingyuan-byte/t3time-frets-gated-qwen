@@ -1,0 +1,57 @@
+===========================================
+FreDF 即插即用模块使用说明
+===========================================
+
+📦 文件夹内容：
+  - fredf_loss.py         核心损失函数模块（必需）
+  - example.py           使用示例代码
+  - README.md            使用说明文档
+  - QUICK_START.md       快速开始指南
+  - INTEGRATION_GUIDE_CN.md  完整集成指南（中文）
+  - INTEGRATION_GUIDE.md     完整集成指南（英文）
+
+🚀 快速使用：
+
+方法1：一行代码（最简单）
+-------------------------------------------
+import torch
+
+loss_temporal = ((outputs - batch_y) ** 2).mean()
+loss_frequency = (torch.fft.rfft(outputs, dim=1) - 
+                 torch.fft.rfft(batch_y, dim=1)).abs().mean()
+loss = loss_temporal + 0.5 * loss_frequency
+
+
+方法2：使用模块（推荐）
+-------------------------------------------
+from fredf_loss import FreDFLoss
+
+criterion = FreDFLoss(lambda_freq=0.5, loss_type='MSE')
+loss, loss_tmp, loss_freq = criterion(outputs, batch_y)
+
+
+方法3：简化函数
+-------------------------------------------
+from fredf_loss import simple_fredf_loss
+
+loss = simple_fredf_loss(outputs, batch_y, lambda_freq=0.5)
+
+
+📋 集成步骤：
+1. 将整个 plug_and_play 文件夹复制到您的项目
+2. 在代码中导入：from fredf_loss import FreDFLoss
+3. 替换原来的损失计算代码
+
+💡 参数说明：
+- lambda_freq: 频率损失权重（推荐：0.5，范围：0.1-1.0）
+- loss_type: 时域损失类型（'MSE' 或 'MAE'）
+- freq_mode: 频率模式（'rfft' 推荐，或 'fft'）
+
+✅ 验证：
+运行 python example.py 查看示例
+
+📖 详细文档：
+查看 README.md 和 INTEGRATION_GUIDE_CN.md
+
+===========================================
+
