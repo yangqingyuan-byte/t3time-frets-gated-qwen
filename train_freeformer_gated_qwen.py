@@ -1,6 +1,6 @@
 """
-T3Time_FreTS_Gated_Qwen 训练脚本
-使用最佳配置的简化版本（不带消融选项）
+T3Time_FreEformer_Gated_Qwen 训练脚本
+基于 T3Time_FreTS_Gated_Qwen 的训练脚本，但使用 FreEformer 的频域注意力机制
 """
 import argparse
 import os
@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from data_provider.data_loader_emb import Dataset_ETT_hour, Dataset_ETT_minute, Dataset_Custom
-from models.T3Time_FreTS_Gated_Qwen import TriModalFreTSGatedQwen
+from models.T3Time_FreEformer_Gated_Qwen import TriModalFreEformerGatedQwen
 from utils.tools import EarlyStopping, adjust_learning_rate
 from utils.metrics import metric
 import numpy as np
@@ -40,7 +40,7 @@ def data_provider(args, flag):
     return data_set, data_loader
 
 def main():
-    parser = argparse.ArgumentParser(description='T3Time_FreTS_Gated_Qwen 训练脚本（最佳配置）')
+    parser = argparse.ArgumentParser(description='T3Time_FreEformer_Gated_Qwen 训练脚本')
     parser.add_argument('--data_path', type=str, default='ETTh1', help='数据集路径')
     parser.add_argument('--seq_len', type=int, default=96, help='输入序列长度')
     parser.add_argument('--pred_len', type=int, default=96, help='预测长度')
@@ -60,7 +60,15 @@ def main():
     parser.add_argument('--weight_decay', type=float, default=1e-4, help='权重衰减')
     parser.add_argument('--loss_fn', type=str, default='smooth_l1', choices=['mse', 'smooth_l1'],
                        help='损失函数: mse (MSELoss) or smooth_l1 (SmoothL1Loss)')
-    parser.add_argument('--model_id', type=str, default='T3Time_FreTS_Gated_Qwen', help='模型标识符')
+    parser.add_argument('--model_id', type=str, default='T3Time_FreEformer_Gated_Qwen', help='模型标识符')
+    parser.add_argument('--embed_size', type=int, default=16, help='FreEformer 的 embed_size（频域 token embedding 维度）')
+    parser.add_argument('--fre_e_layer', type=int, default=1, help='频域 Transformer 编码器层数')
+    parser.add_argument('--d_model', type=int, default=None, help='模型维度（已禁用，固定使用 channel）')
+    parser.add_argument('--d_ff', type=int, default=None, help='前馈网络维度（已禁用，固定使用 channel * 4）')
+    parser.add_argument('--attn_enhance', type=int, default=None, help='注意力增强模式（SF_mode，None=0=Vanilla, 1=Enhanced）')
+    parser.add_argument('--attn_softmax_flag', type=int, default=1, help='注意力 softmax 标志（0=False, 1=True）')
+    parser.add_argument('--attn_weight_plus', type=int, default=0, help='注意力权重加法模式（0=False, 1=True）')
+    parser.add_argument('--attn_outside_softmax', type=int, default=0, help='注意力外部 softmax（0=False, 1=True）')
     args = parser.parse_args()
     
     # 设置随机种子
@@ -81,8 +89,8 @@ def main():
     _, vali_loader = data_provider(args, 'val')
     _, test_loader = data_provider(args, 'test')
 
-    # 创建模型（使用最佳配置，不带消融选项）
-    model = TriModalFreTSGatedQwen(
+    # 创建模型
+    model = TriModalFreEformerGatedQwen(
         device=device, 
         channel=args.channel, 
         num_nodes=args.num_nodes, 
@@ -91,7 +99,15 @@ def main():
         dropout_n=args.dropout_n,
         e_layer=args.e_layer,
         d_layer=args.d_layer,
-        head=args.head
+        head=args.head,
+        embed_size=args.embed_size,
+        fre_e_layer=args.fre_e_layer,
+        d_model=None,  # 固定使用 channel，忽略参数
+        fre_d_ff=None,  # 固定使用 channel * 4，忽略参数
+        attn_enhance=args.attn_enhance,
+        attn_softmax_flag=bool(args.attn_softmax_flag),
+        attn_weight_plus=bool(args.attn_weight_plus),
+        attn_outside_softmax=bool(args.attn_outside_softmax)
     ).to(device)
     
     # 优化器和损失函数
@@ -99,19 +115,23 @@ def main():
     if args.loss_fn == 'mse':
         criterion = nn.MSELoss()
     else:
-        criterion = nn.SmoothL1Loss(beta=0.2)
+        criterion = nn.SmoothL1Loss()
+    
+    # Early Stopping
     early_stopping = EarlyStopping(patience=args.es_patience, verbose=True)
     
     # 在内存中保存最佳模型状态（不保存到磁盘）
     best_model_state = None
     best_vali_loss = float('inf')
-
+    
     print("="*60)
-    print(f"训练开始 - T3Time_FreTS_Gated_Qwen (最佳配置)")
+    print(f"训练开始 - T3Time_FreEformer_Gated_Qwen")
     print(f"Pred_Len: {args.pred_len}, Channel: {args.channel}")
-    print(f"固定配置: FreTS Component, 稀疏化(0.009), 改进门控, Gate融合")
+    print(f"频域参数: embed_size={args.embed_size}, fre_e_layer={args.fre_e_layer}")
+    print(f"固定配置: FreEformer 频域注意力机制（Transformer Encoder）")
+    print(f"可训练参数量: {model.count_trainable_params():,}")
     print("="*60)
-
+    
     # 训练循环
     for epoch in range(args.epochs):
         model.train()
@@ -151,7 +171,7 @@ def main():
         
         # 学习率调整
         adjust_learning_rate(optimizer, epoch + 1, args)
-
+    
     # 加载内存中的最佳模型状态
     if best_model_state is not None:
         model.load_state_dict(best_model_state)
@@ -169,11 +189,11 @@ def main():
             by_pred = by[:, -args.pred_len:, :]
             preds.append(out.detach().cpu())
             trues.append(by_pred.detach().cpu())
-
+    
     preds, trues = torch.cat(preds, dim=0), torch.cat(trues, dim=0)
     mse, mae = metric(preds, trues)
     print(f"On average horizons, Test MSE: {mse:.6f}, Test MAE: {mae:.6f}")
-
+    
     # 写入实验日志
     log_file = "/root/0/T3Time/experiment_results.log"
     with open(log_file, "a") as f:
@@ -183,7 +203,7 @@ def main():
             "pred_len": args.pred_len,
             "test_mse": float(mse),
             "test_mae": float(mae),
-            "model": "T3Time_FreTS_Gated_Qwen",
+            "model": "T3Time_FreEformer_Gated_Qwen",
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "seed": args.seed,
             "seq_len": args.seq_len,
@@ -199,16 +219,20 @@ def main():
             "loss_fn": args.loss_fn,
             "lradj": args.lradj,
             "patience": args.es_patience,
+            "embed_size": args.embed_size,
+            "fre_e_layer": args.fre_e_layer,
+            "d_model": args.d_model,
+            "d_ff": args.d_ff,
+            "attn_enhance": args.attn_enhance,
+            "attn_softmax_flag": args.attn_softmax_flag,
+            "attn_weight_plus": args.attn_weight_plus,
+            "attn_outside_softmax": args.attn_outside_softmax,
             # 固定配置参数（用于记录）
-            "sparsity_threshold": 0.009,
-            "frets_scale": 0.018,
             "fusion_mode": "gate",
-            "use_frets": True,
-            "use_sparsity": True,
-            "use_improved_gate": True
+            "use_freeformer": True
         }
         f.write(json.dumps(res) + "\n")
     print(f"✅ 实验结果已保存到 {log_file}")
 
-if __name__ == "__main__": 
+if __name__ == '__main__':
     main()

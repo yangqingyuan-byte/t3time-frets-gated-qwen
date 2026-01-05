@@ -1,6 +1,6 @@
 """
-T3Time_FreTS_Gated_Qwen 训练脚本
-使用最佳配置的简化版本（不带消融选项）
+T3Time_FreTS_Gated_Qwen_LongSeq_v2 训练脚本
+完全参考 T3Time 流程的改进版本
 """
 import argparse
 import os
@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from data_provider.data_loader_emb import Dataset_ETT_hour, Dataset_ETT_minute, Dataset_Custom
-from models.T3Time_FreTS_Gated_Qwen import TriModalFreTSGatedQwen
+from models.T3Time_FreTS_Gated_Qwen_LongSeq_v2 import TriModalFreTSGatedQwenLongSeqV2
 from utils.tools import EarlyStopping, adjust_learning_rate
 from utils.metrics import metric
 import numpy as np
@@ -40,7 +40,7 @@ def data_provider(args, flag):
     return data_set, data_loader
 
 def main():
-    parser = argparse.ArgumentParser(description='T3Time_FreTS_Gated_Qwen 训练脚本（最佳配置）')
+    parser = argparse.ArgumentParser(description='T3Time_FreTS_Gated_Qwen_LongSeq_v2 训练脚本（完全参考T3Time流程）')
     parser.add_argument('--data_path', type=str, default='ETTh1', help='数据集路径')
     parser.add_argument('--seq_len', type=int, default=96, help='输入序列长度')
     parser.add_argument('--pred_len', type=int, default=96, help='预测长度')
@@ -60,7 +60,10 @@ def main():
     parser.add_argument('--weight_decay', type=float, default=1e-4, help='权重衰减')
     parser.add_argument('--loss_fn', type=str, default='smooth_l1', choices=['mse', 'smooth_l1'],
                        help='损失函数: mse (MSELoss) or smooth_l1 (SmoothL1Loss)')
-    parser.add_argument('--model_id', type=str, default='T3Time_FreTS_Gated_Qwen', help='模型标识符')
+    parser.add_argument('--model_id', type=str, default='T3Time_FreTS_Gated_Qwen_LongSeq_v2', help='模型标识符')
+    parser.add_argument('--sparsity_threshold', type=float, default=0.009, help='稀疏化阈值（基础值）')
+    parser.add_argument('--frets_scale', type=float, default=0.018, help='FreTS Component 初始化 scale')
+    parser.add_argument('--use_dynamic_sparsity', type=int, default=1, choices=[0, 1], help='是否使用动态稀疏化（根据预测长度调整）')
     args = parser.parse_args()
     
     # 设置随机种子
@@ -81,8 +84,8 @@ def main():
     _, vali_loader = data_provider(args, 'val')
     _, test_loader = data_provider(args, 'test')
 
-    # 创建模型（使用最佳配置，不带消融选项）
-    model = TriModalFreTSGatedQwen(
+    # 创建模型（v2版本，完全参考T3Time流程）
+    model = TriModalFreTSGatedQwenLongSeqV2(
         device=device, 
         channel=args.channel, 
         num_nodes=args.num_nodes, 
@@ -91,7 +94,10 @@ def main():
         dropout_n=args.dropout_n,
         e_layer=args.e_layer,
         d_layer=args.d_layer,
-        head=args.head
+        head=args.head,
+        sparsity_threshold=args.sparsity_threshold,
+        frets_scale=args.frets_scale,
+        use_dynamic_sparsity=bool(args.use_dynamic_sparsity)
     ).to(device)
     
     # 优化器和损失函数
@@ -107,9 +113,14 @@ def main():
     best_vali_loss = float('inf')
 
     print("="*60)
-    print(f"训练开始 - T3Time_FreTS_Gated_Qwen (最佳配置)")
+    print(f"训练开始 - T3Time_FreTS_Gated_Qwen_LongSeq_v2 (完全参考T3Time流程)")
     print(f"Pred_Len: {args.pred_len}, Channel: {args.channel}")
-    print(f"固定配置: FreTS Component, 稀疏化(0.009), 改进门控, Gate融合")
+    print(f"改进配置:")
+    print(f"  - 完全按照 T3Time 的流程顺序")
+    print(f"  - RichHorizonGate 只基于时域特征（与T3Time一致）")
+    print(f"  - 频域处理：FreTS Component → 编码器 → 池化")
+    print(f"  - 融合公式：gate * freq + (1-gate) * time（与T3Time一致）")
+    print(f"  - 动态稀疏化: {args.use_dynamic_sparsity}")
     print("="*60)
 
     # 训练循环
@@ -183,7 +194,7 @@ def main():
             "pred_len": args.pred_len,
             "test_mse": float(mse),
             "test_mae": float(mae),
-            "model": "T3Time_FreTS_Gated_Qwen",
+            "model": "T3Time_FreTS_Gated_Qwen_LongSeq_v2",
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "seed": args.seed,
             "seq_len": args.seq_len,
@@ -199,13 +210,11 @@ def main():
             "loss_fn": args.loss_fn,
             "lradj": args.lradj,
             "patience": args.es_patience,
-            # 固定配置参数（用于记录）
-            "sparsity_threshold": 0.009,
-            "frets_scale": 0.018,
-            "fusion_mode": "gate",
-            "use_frets": True,
-            "use_sparsity": True,
-            "use_improved_gate": True
+            # v2版本参数
+            "sparsity_threshold": args.sparsity_threshold,
+            "frets_scale": args.frets_scale,
+            "use_dynamic_sparsity": bool(args.use_dynamic_sparsity),
+            "version": "v2_t3time_flow"
         }
         f.write(json.dumps(res) + "\n")
     print(f"✅ 实验结果已保存到 {log_file}")

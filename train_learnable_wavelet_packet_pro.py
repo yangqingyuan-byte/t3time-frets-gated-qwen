@@ -13,6 +13,15 @@ from data_provider.data_loader_emb import Dataset_ETT_hour, Dataset_Custom
 from utils.tools import EarlyStopping, adjust_learning_rate
 from utils.metrics import metric
 
+# 【V18/V27】 Shape Loss 定义
+def correlation_loss(pred, target):
+    pred_mean = pred - pred.mean(dim=1, keepdim=True)
+    target_mean = target - target.mean(dim=1, keepdim=True)
+    pred_std = pred_mean.norm(dim=1, keepdim=True) + 1e-8
+    target_std = target_mean.norm(dim=1, keepdim=True) + 1e-8
+    corr = (pred_mean * target_mean).sum(dim=1, keepdim=True) / (pred_std * target_std)
+    return (1 - corr).mean()
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--root_path', type=str, default='./dataset/')
@@ -93,9 +102,12 @@ def main():
         wp_level=args.wp_level
     ).to(device)
 
-    # 引入 weight_decay 缓解过拟合
-    optimizer = optim.Adam(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
+    # V25 配置: 纯净 MSE Loss
     criterion = nn.MSELoss()
+    
+    # V25 配置: Adam 优化器 + Step Decay
+    optimizer = optim.Adam(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
+    
     early_stopping = EarlyStopping(patience=args.patience, verbose=True)
 
     for epoch in range(args.epochs):
@@ -106,21 +118,23 @@ def main():
             bx, by = bx.to(device).float(), by.to(device).float()
             bxm, emb = bxm.to(device).float(), emb.to(device).float()
             
-            # 【V11 改进】 恢复单输出调用，移除辅助 Loss
             outputs = model(bx, bxm, emb)
             
-            # 主 Loss
-            loss = criterion(outputs, by)
+            # 简单纯粹的 MSE
+            mse_loss = criterion(outputs, by)
             
-            # 小波阈值稀疏约束 (Sparsity Loss)
+            # 不加 Shape Loss，避免干扰 MSE 的极值搜索
             l1_lambda = 1e-4
             sparsity_loss = model.get_sparsity_loss()
-            loss = loss + l1_lambda * sparsity_loss
+            loss = mse_loss + l1_lambda * sparsity_loss
             
             loss.backward()
             optimizer.step()
             train_loss.append(loss.item())
 
+        # V25 配置: Step Decay
+        adjust_learning_rate(optimizer, epoch + 1, args)
+        
         model.eval()
         val_loss = []
         with torch.no_grad():
@@ -131,12 +145,18 @@ def main():
                 val_loss.append(criterion(outputs, by).item())
         
         v_loss = np.average(val_loss)
-        print(f"Epoch {epoch+1}, Train Loss: {np.average(train_loss):.6f}, Val Loss: {v_loss:.6f}")
+        print(f"Epoch {epoch+1}, LR: {optimizer.param_groups[0]['lr']:.8f}, Train Loss: {np.average(train_loss):.6f}, Val Loss: {v_loss:.6f}")
+        
         early_stopping(v_loss, model, "./checkpoints/")
         if early_stopping.early_stop: break
-        adjust_learning_rate(optimizer, epoch + 1, args)
 
-    model.load_state_dict(torch.load("./checkpoints/checkpoint.pth"))
+    # 【V19 集成支持】 根据 seed 保存不同名称的 checkpoint
+    checkpoint_path = f"./checkpoints/checkpoint_seed_{args.seed}.pth"
+    if os.path.exists("./checkpoints/checkpoint.pth"):
+        os.rename("./checkpoints/checkpoint.pth", checkpoint_path)
+        print(f"Checkpoint saved as: {checkpoint_path}")
+    
+    model.load_state_dict(torch.load(checkpoint_path))
     model.eval()
     preds, trues = [], []
     with torch.no_grad():

@@ -1,11 +1,9 @@
 """
-T3Time Learnable Wavelet Packet Gated Pro Qwen (V12 - High-Reg Channel-Aware SOTA)
-回归与升维：
-1. 回归静态权重: 移除动态生成网络，避免过拟合。
-2. 通道感知 (Channel-Aware): band_weights 维度为 [Nodes, Channel]，每个通道独立选择频带。
-3. Sigmoid 聚合: 允许权重非互斥，允许关断。
-4. 视界感知门控: 重新引入 Horizon-Aware Gate，让模型根据预测长度调整融合策略。
-5. 高正则化: Dropout 0.5 + Weight Decay 1e-3，强力压制过拟合。
+T3Time Learnable Wavelet Packet Gated Pro Qwen (V30 - Freq-Dropout SOTA)
+基于 V25 (冠军版本) 的改进：
+1. 频带随机丢弃 (Frequency Dropout): 在训练时随机 mask 掉某个频带，
+   强迫模型不依赖单一频率成分，增强鲁棒性。
+2. 结构基底: 严格保持 V25 的所有配置 (Prior Init, Pre-Norm, affine=False).
 """
 import torch
 import torch.nn as nn
@@ -47,6 +45,7 @@ class LearnableSoftThreshold(nn.Module):
 class ResidualLiftingStep(nn.Module):
     def __init__(self, channel=1):
         super().__init__()
+        # V18: Kernel=3, LeakyReLU
         self.predict = nn.Sequential(
             nn.Conv1d(channel, 8, kernel_size=3, padding=1),
             nn.LeakyReLU(0.2),
@@ -78,9 +77,15 @@ class TriModalLearnableWaveletPacketGatedProQwen(nn.Module):
         self.device, self.channel, self.num_nodes, self.seq_len, self.pred_len = device, channel, num_nodes, seq_len, pred_len
         self.wp_level = wp_level
         
+        # V25: affine=False
         self.normalize_layers = Normalize(num_nodes, affine=False).to(device)
         self.length_to_feature = nn.Linear(seq_len, channel).to(device)
-        self.ts_encoder = nn.ModuleList([GatedTransformerEncoderLayer(channel, head, dropout=dropout_n) for _ in range(e_layer)]).to(device)
+        
+        # V25: FFN=4*C (V12配置)
+        self.ts_encoder = nn.ModuleList([
+            GatedTransformerEncoderLayer(channel, head, dropout=dropout_n) 
+            for _ in range(e_layer)
+        ]).to(device)
         
         self.lifting_steps = nn.ModuleList([ResidualLiftingStep() for _ in range(wp_level)]).to(device)
         num_wp_nodes = 2 ** wp_level
@@ -95,13 +100,12 @@ class TriModalLearnableWaveletPacketGatedProQwen(nn.Module):
         self.cf_interaction = nn.MultiheadAttention(channel, head, dropout=dropout_n, batch_first=True).to(device)
         self.cf_norm = nn.LayerNorm(channel).to(device)
 
-        # 【核心回归 V12】 通道感知静态权重 (Channel-Aware Static Weights)
-        # 形状: [num_wp_nodes, channel] -> 每个通道独立权重
-        # 初始化: 0.0 (Sigmoid -> 0.5)
-        self.band_weights = nn.Parameter(torch.zeros(num_wp_nodes, channel)).to(device)
+        # V25: Prior Init
+        prior_weights = torch.zeros(num_wp_nodes, channel)
+        prior_weights[0, :] = 1.0  
+        prior_weights[1:, :] = -1.0 
+        self.band_weights = nn.Parameter(prior_weights).to(device)
 
-        # 视界感知门控 (Horizon-Aware Gate)
-        # 输入: 时域特征(C) + 频域特征(C) + 视界信息(1)
         self.fusion_gate = nn.Sequential(
             nn.Linear(channel * 2 + 1, channel // 2),
             nn.ReLU(),
@@ -109,7 +113,11 @@ class TriModalLearnableWaveletPacketGatedProQwen(nn.Module):
             nn.Sigmoid()
         ).to(device)
         
-        self.prompt_encoder = nn.ModuleList([GatedTransformerEncoderLayer(d_llm, head, dropout=dropout_n) for _ in range(e_layer)]).to(device)
+        self.prompt_encoder = nn.ModuleList([
+            GatedTransformerEncoderLayer(d_llm, head, dropout=dropout_n) 
+            for _ in range(e_layer)
+        ]).to(device)
+        
         from layers.Cross_Modal_Align import CrossModal
         self.cma = CrossModal(d_model=num_nodes, n_heads=1, d_ff=32, dropout=dropout_n).to(device)
         
@@ -141,13 +149,23 @@ class TriModalLearnableWaveletPacketGatedProQwen(nn.Module):
             node_feats.append((feat * weights).sum(dim=1))
         
         wp_stack = torch.stack(node_feats, dim=1) # [B*N, 4, C]
-        wp_inter, _ = self.cf_interaction(wp_stack, wp_stack, wp_stack)
-        wp_out = self.cf_norm(wp_inter + wp_stack) 
         
-        # 【核心回归 V12】 通道感知聚合
-        # w shape: [4, C]
+        # 【核心改进 V30】 频带 Dropout (Frequency Dropout)
+        # 仅在训练时，以 10% 的概率随机 mask 掉某个频带
+        if self.training:
+            # 生成 mask: [B*N, 4, 1]
+            # Bernouli 分布: 0.9 概率为 1 (保留), 0.1 概率为 0 (丢弃)
+            mask = torch.bernoulli(torch.full((B*N, 4, 1), 0.9, device=self.device))
+            # 缩放以保持期望值不变 (Inverted Dropout)
+            mask = mask / 0.9 
+            wp_stack = wp_stack * mask
+
+        # Pre-Norm (V25)
+        wp_norm = self.cf_norm(wp_stack)
+        wp_inter, _ = self.cf_interaction(wp_norm, wp_norm, wp_norm)
+        wp_out = wp_stack + wp_inter
+        
         w = torch.sigmoid(self.band_weights) 
-        # Broadcasting: [B*N, 4, C] * [1, 4, C] -> Weighted Sum
         wp_final = (wp_out * w.unsqueeze(0)).sum(dim=1)
         
         return wp_final.reshape(B, N, self.channel)
@@ -167,7 +185,6 @@ class TriModalLearnableWaveletPacketGatedProQwen(nn.Module):
         ts_feat = self.length_to_feature(x_norm)
         for layer in self.ts_encoder: ts_feat = layer(ts_feat)
         
-        # 视界感知门控融合 (Horizon-Aware Gate)
         B, N, C = ts_feat.shape
         horizon_info = torch.full((B, N, 1), self.pred_len / 100.0, device=self.device)
         gate_input = torch.cat([ts_feat, wp_feat, horizon_info], dim=-1)

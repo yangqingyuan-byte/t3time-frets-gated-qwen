@@ -38,9 +38,13 @@ def get_choice(options, prompt):
 
 def format_params(row):
     """格式化超参数组合"""
-    exclude = {'data_path', 'model', 'test_mse', 'test_mae', 'timestamp'}
+    exclude = {'data_path', 'model', 'model_id', 'test_mse', 'test_mae', 'timestamp'}
     params = [f"{k}={v}" for k, v in row.items() if k not in exclude]
     return "\n".join(params)
+
+def get_model_name(log):
+    """获取模型名称，优先使用 model_id，如果不存在则使用 model 字段"""
+    return log.get('model_id') or log.get('model', 'Unknown')
 
 def analyze_all_pred_lens(logs, selected_data, selected_model, pred_lens):
     """统计所有预测长度的最好结果并求均值"""
@@ -135,11 +139,13 @@ def main():
         current_logs = [log for log in current_logs if log['data_path'] == selected_data]
 
     # 2. 选择 Model
-    models = sorted(list(set(log['model'] for log in current_logs)))
-    selected_model = get_choice(models, "请选择要查看的模型 (Model):")
+    # 优先使用 model_id，如果不存在则使用 model 字段
+    models = sorted(list(set(get_model_name(log) for log in current_logs)))
+    selected_model = get_choice(models, "请选择要查看的模型 (Model/Model_ID):")
     
     if selected_model:
-        current_logs = [log for log in current_logs if log['model'] == selected_model]
+        # 匹配 model_id 或 model 字段
+        current_logs = [log for log in current_logs if get_model_name(log) == selected_model]
 
     # 2.5 询问是否统计所有预测长度
     pred_lens = sorted(list(set(log.get('pred_len') for log in current_logs if 'pred_len' in log and log.get('pred_len') is not None)))
@@ -204,8 +210,10 @@ def main():
     mse_sorted = sorted(current_logs, key=lambda x: x['test_mse'], reverse=not is_ascending)[:10]
     mse_table = []
     for row in mse_sorted:
+        # 显示时优先使用 model_id，如果不存在则使用 model
+        model_display = get_model_name(row)
         mse_table.append([
-            row['model'],
+            model_display,
             row['data_path'],
             f"{row['test_mse']:.6f}",
             f"{row['test_mae']:.6f}",
@@ -219,8 +227,10 @@ def main():
     mae_sorted = sorted(current_logs, key=lambda x: x['test_mae'], reverse=not is_ascending)[:10]
     mae_table = []
     for row in mae_sorted:
+        # 显示时优先使用 model_id，如果不存在则使用 model
+        model_display = get_model_name(row)
         mae_table.append([
-            row['model'],
+            model_display,
             row['data_path'],
             f"{row['test_mse']:.6f}",
             f"{row['test_mae']:.6f}",

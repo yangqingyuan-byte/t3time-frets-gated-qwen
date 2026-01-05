@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import os
 
 def adjust_learning_rate(optimizer, epoch, args):
     # 根据用户深度建议：增加 Linear Warmup 并放慢衰减速度
@@ -55,9 +56,14 @@ class EarlyStopping:
             self.counter = 0
 
     def save_checkpoint(self, val_loss, model, path):
+        # 注意：如果 path 是 "./" 或 "."，不保存到磁盘（避免在根目录创建文件）
+        # 实际最佳模型应该在训练脚本中保存到内存
         if self.verbose:
             print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
-        torch.save(model.state_dict(), path+'/'+'checkpoint.pth')
+        # 只有当 path 不是当前目录时才保存到磁盘
+        if path and path not in ["./", ".", ""]:
+            os.makedirs(path, exist_ok=True)
+            torch.save(model.state_dict(), os.path.join(path, 'checkpoint.pth'))
         self.val_loss_min = val_loss
 
 class dotdict(dict):
