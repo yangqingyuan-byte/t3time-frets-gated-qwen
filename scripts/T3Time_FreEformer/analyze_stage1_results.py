@@ -127,15 +127,28 @@ def analyze_step1_2_fre_e_layer(results, best_channel):
 
 def analyze_step1_3_embed_size(results, best_channel, best_fre_e_layer):
     """分析步骤1.3: embed_size 寻优结果"""
+    # 首先尝试匹配最佳 fre_e_layer
     step_results = [r for r in results if 'Step1_3' in r.get('model_id', '') and 
                     f'Channel{best_channel}' in r.get('model_id', '') and
                     f'FreELayer{best_fre_e_layer}' in r.get('model_id', '')]
     
+    # 如果没有找到，尝试匹配所有 Step1_3 的结果（可能使用了不同的 fre_e_layer）
+    if not step_results:
+        step_results = [r for r in results if 'Step1_3' in r.get('model_id', '') and 
+                        f'Channel{best_channel}' in r.get('model_id', '')]
+    
     if not step_results:
         return None
     
+    # 检查实际使用的 fre_e_layer
+    actual_fre_e_layers = set(r.get('fre_e_layer') for r in step_results if r.get('fre_e_layer') is not None)
+    
     print("\n" + "=" * 80)
-    print(f"步骤 1.3: Embed_Size 寻优结果（Channel={best_channel}, Fre_E_Layer={best_fre_e_layer}）")
+    if len(actual_fre_e_layers) == 1 and list(actual_fre_e_layers)[0] != best_fre_e_layer:
+        print(f"步骤 1.3: Embed_Size 寻优结果（Channel={best_channel}）")
+        print(f"⚠️  注意: 实验实际使用的 Fre_E_Layer={list(actual_fre_e_layers)[0]}，而不是步骤1.2的最佳值 {best_fre_e_layer}")
+    else:
+        print(f"步骤 1.3: Embed_Size 寻优结果（Channel={best_channel}, Fre_E_Layer={best_fre_e_layer}）")
     print("=" * 80)
     
     embed_results = {}

@@ -6,25 +6,43 @@ set -uo pipefail
 
 unset __vsc_prompt_cmd_original 2>/dev/null || true
 
-# 计算总实验数（只计算有效的组合，channel 必须能被 head 整除）
+# 获取脚本所在目录
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PARALLEL_SCRIPT="${SCRIPT_DIR}/hyperopt_pred720_seed2088_parallel.sh"
+
+# 使用与 hyperopt_pred720_seed2088_parallel.sh 完全相同的逻辑计算总实验数
+# 必须按照相同的顺序生成实验配置，确保索引对应关系正确
 CHANNELS=(64 96 128)
-DROPOUTS=(0.5 0.55 0.6 0.65)
+DROPOUTS=(0.1 0.3 0.5 0.7 0.9)
 HEADS=(6 8 12 16)
 LEARNING_RATES=(5e-5 6e-5 7e-5 7.5e-5 8e-5 1e-4)
 WEIGHT_DECAYS=(1e-4 5e-4 1e-3 2e-3)
 LOSS_FNS=("mse")
 BATCH_SIZES=(16 32)
 
-# 计算有效实验数（channel 必须能被 head 整除）
-total_exps=0
+# 按照与 hyperopt_pred720_seed2088_parallel.sh 完全相同的顺序生成实验配置
+D_LLM=1024
+experiments=()
 for CHANNEL in "${CHANNELS[@]}"; do
-    for HEAD in "${HEADS[@]}"; do
-        if [ $((CHANNEL % HEAD)) -eq 0 ]; then
-            count=$((${#DROPOUTS[@]} * ${#LEARNING_RATES[@]} * ${#WEIGHT_DECAYS[@]} * ${#LOSS_FNS[@]} * ${#BATCH_SIZES[@]}))
-            total_exps=$((total_exps + count))
-        fi
+    for DROPOUT_N in "${DROPOUTS[@]}"; do
+        for HEAD in "${HEADS[@]}"; do
+            # 检查 channel 和 d_llm 是否都能被 head 整除（与 hyperopt_pred720_seed2088_parallel.sh 保持一致）
+            if [ $((CHANNEL % HEAD)) -eq 0 ] && [ $((D_LLM % HEAD)) -eq 0 ]; then
+                for LEARNING_RATE in "${LEARNING_RATES[@]}"; do
+                    for WEIGHT_DECAY in "${WEIGHT_DECAYS[@]}"; do
+                        for LOSS_FN in "${LOSS_FNS[@]}"; do
+                            for BATCH_SIZE in "${BATCH_SIZES[@]}"; do
+                                experiments+=("${CHANNEL}|${DROPOUT_N}|${HEAD}|${LEARNING_RATE}|${WEIGHT_DECAY}|${LOSS_FN}|${BATCH_SIZE}")
+                            done
+                        done
+                    done
+                done
+            fi
+        done
     done
 done
+
+total_exps=${#experiments[@]}
 
 half_exps=$((total_exps / 2))
 

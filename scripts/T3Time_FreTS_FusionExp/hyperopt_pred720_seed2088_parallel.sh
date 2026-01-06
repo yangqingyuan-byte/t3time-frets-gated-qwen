@@ -30,7 +30,7 @@ mkdir -p "${LOG_DIR}"
 # 固定参数
 DATA_PATH="ETTh1"
 SEQ_LEN=96
-PRED_LEN=720
+PRED_LEN=336
 E_LAYER=1
 D_LAYER=1
 EPOCHS=150
@@ -42,23 +42,26 @@ MODEL_ID="T3Time_FreTS_Gated_Qwen_Hyperopt"
 
 # 完整搜索空间（基于原版 T3Time 和小波包模型的成功经验）
 # 注意：head 必须能整除 channel，所以需要合理搭配
-CHANNELS=(64 96 128)
-DROPOUTS=(0.5 0.55 0.6 0.65)
+CHANNELS=(128 256)
+DROPOUTS=(0.5 0.6 0.7)
 # Head 选择：64的因子=[1,2,4,8,16,32,64], 96的因子=[1,2,3,4,6,8,12,16,24,32,48,96], 128的因子=[1,2,4,8,16,32,64,128]
 # 选择共同的因子：8, 16，以及96特有的：6, 12
-HEADS=(6 8 12 16)
-LEARNING_RATES=(5e-5 6e-5 7e-5 7.5e-5 8e-5 1e-4)
+HEADS=(8 16)
+LEARNING_RATES=(5e-5 7.5e-5 1e-4)
 WEIGHT_DECAYS=(1e-4 5e-4 1e-3 2e-3)
-LOSS_FNS=("mse")
+# 注意：bash 数组元素之间用空格分隔，不能用逗号，否则会变成一个字符串 "mse,smooth_l1"
+LOSS_FNS=("mse" "smooth_l1")
 BATCH_SIZES=(16 32)
 
-# 生成所有实验配置（只包含 channel 能被 head 整除的组合）
+# 生成所有实验配置（只包含 channel 和 d_llm 都能被 head 整除的组合）
+# 注意：d_llm=1024，所以 head 必须是 1024 的因子（1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024）
 experiments=()
+D_LLM=1024
 for CHANNEL in "${CHANNELS[@]}"; do
     for DROPOUT_N in "${DROPOUTS[@]}"; do
         for HEAD in "${HEADS[@]}"; do
-            # 检查 channel 是否能被 head 整除
-            if [ $((CHANNEL % HEAD)) -eq 0 ]; then
+            # 检查 channel 和 d_llm 是否都能被 head 整除
+            if [ $((CHANNEL % HEAD)) -eq 0 ] && [ $((D_LLM % HEAD)) -eq 0 ]; then
                 for LEARNING_RATE in "${LEARNING_RATES[@]}"; do
                     for WEIGHT_DECAY in "${WEIGHT_DECAYS[@]}"; do
                         for LOSS_FN in "${LOSS_FNS[@]}"; do
@@ -74,6 +77,31 @@ for CHANNEL in "${CHANNELS[@]}"; do
 done
 
 total_exps=${#experiments[@]}
+
+# 如果不带任何参数调用脚本，则默认自动使用两张 GPU 并行跑完所有实验
+if [ "$#" -eq 0 ]; then
+    MID=$(((total_exps - 1) / 2))
+    echo "=========================================="
+    echo "检测到未指定参数，启用默认双卡自动并行模式"
+    echo "总实验数: ${total_exps}，GPU0 跑 [0, ${MID}]，GPU1 跑 [$((MID + 1)), $((total_exps - 1))]"
+    echo "每卡并行数: ${PARALLEL}"
+    echo "=========================================="
+    echo ""
+
+    # GPU0 跑前半段
+    CUDA_VISIBLE_DEVICES=0 bash "$0" 0 0 "${MID}" "${PARALLEL}" &
+    PID0=$!
+
+    # GPU1 跑后半段
+    CUDA_VISIBLE_DEVICES=1 bash "$0" 1 "$((MID + 1))" "$((total_exps - 1))" "${PARALLEL}" &
+    PID1=$!
+
+    # 等待两个子进程结束
+    wait "${PID0}" "${PID1}"
+    echo "✅ 双卡自动并行超参搜索已完成"
+    exit 0
+fi
+
 if [ ${END_IDX} -eq -1 ]; then
     END_IDX=$((total_exps - 1))
 fi

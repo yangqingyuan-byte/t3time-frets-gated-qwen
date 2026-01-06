@@ -70,20 +70,24 @@ def analyze_all_pred_lens(logs, selected_data, selected_model, pred_lens):
         
         # 找出 MSE 最好的结果
         mse_best = min(pred_len_logs, key=lambda x: x['test_mse'])
+        mse_best_model = get_model_name(mse_best)
         mse_best_by_pred_len.append({
             'pred_len': pred_len,
             'mse': mse_best['test_mse'],
             'mae': mse_best['test_mae'],
+            'model': mse_best_model,
             'params': format_params(mse_best)
         })
         mse_values.append(mse_best['test_mse'])
         
         # 找出 MAE 最好的结果
         mae_best = min(pred_len_logs, key=lambda x: x['test_mae'])
+        mae_best_model = get_model_name(mae_best)
         mae_best_by_pred_len.append({
             'pred_len': pred_len,
             'mse': mae_best['test_mse'],
             'mae': mae_best['test_mae'],
+            'model': mae_best_model,
             'params': format_params(mae_best)
         })
         mae_values.append(mae_best['test_mae'])
@@ -98,11 +102,12 @@ def analyze_all_pred_lens(logs, selected_data, selected_model, pred_lens):
     for item in mse_best_by_pred_len:
         mse_table.append([
             str(item['pred_len']),
+            item.get('model', 'Unknown'),
             f"{item['mse']:.6f}",
             f"{item['mae']:.6f}",
             item['params']
         ])
-    print(tabulate(mse_table, headers=["pred_len", "MSE (最好)", "MAE", "Parameters"], tablefmt="grid"))
+    print(tabulate(mse_table, headers=["pred_len", "Model", "MSE (最好)", "MAE", "Parameters"], tablefmt="grid"))
     print(f"\n所有预测长度 MSE 最好结果的平均值: {mse_mean:.6f}")
     mse_mae_mean = sum(item['mae'] for item in mse_best_by_pred_len) / len(mse_best_by_pred_len) if mse_best_by_pred_len else 0
     print(f"所有预测长度对应 MAE 的平均值: {mse_mae_mean:.6f}")
@@ -113,11 +118,12 @@ def analyze_all_pred_lens(logs, selected_data, selected_model, pred_lens):
     for item in mae_best_by_pred_len:
         mae_table.append([
             str(item['pred_len']),
+            item.get('model', 'Unknown'),
             f"{item['mse']:.6f}",
             f"{item['mae']:.6f}",
             item['params']
         ])
-    print(tabulate(mae_table, headers=["pred_len", "MSE", "MAE (最好)", "Parameters"], tablefmt="grid"))
+    print(tabulate(mae_table, headers=["pred_len", "Model", "MSE", "MAE (最好)", "Parameters"], tablefmt="grid"))
     print(f"\n所有预测长度 MAE 最好结果的平均值: {mae_mean:.6f}")
     mae_mse_mean = sum(item['mse'] for item in mae_best_by_pred_len) / len(mae_best_by_pred_len) if mae_best_by_pred_len else 0
     print(f"所有预测长度对应 MSE 的平均值: {mae_mse_mean:.6f}")
