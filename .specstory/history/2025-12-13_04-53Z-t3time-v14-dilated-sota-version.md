@@ -28166,14 +28166,36 @@ Additional data:
     },
     "codeblockId": "8358cae7-46e8-4552-8a0b-b3b1e220aae7",
     "codeBlockIdx": 0,
-    "content": "",
+    "content": "#!/bin/bash\n# T3Time_FreTS_Gated_Qwen_Hyperopt 并行参数寻优脚本\n# 支持多GPU并行运行，可以指定GPU ID和实验范围\n\nset -uo pipefail\n\n# 清理可能的环境变量问题\nunset __vsc_prompt_cmd_original 2&gt;/dev/null || true\n\n# 激活 conda 环境\neval \"$(conda shell.bash hook)\" 2&gt;/dev/null || true\nconda activate TimeCMA_Qwen3 2&gt;/dev/null || source activate TimeCMA_Qwen3 2&gt;/dev/null || true\n\n# 设置环境变量\nexport PYTHONPATH=\"/root/0/T3Time:${PYTHONPATH-}\"\nexport PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True\n\n# 参数解析\nGPU_ID=${1:-0}  # 默认 GPU 0\nSTART_IDX=${2:-0}  # 默认从第0个实验开始\nEND_IDX=${3:--1}  # 默认到最后一个实验（-1表示全部）\nPARALLEL=${4:-4}  # 默认同时运行4个实验\n\nexport CUDA_VISIBLE_DEVICES=${GPU_ID}\n\nLOG_DIR=\"/root/0/T3Time/Results/T3Time_FreTS_Gated_Qwen_Hyperopt/ETTh1\"\nRESULT_LOG=\"/root/0/T3Time/experiment_results.log\"\nmkdir -p \"${LOG_DIR}\"\n\n# 固定参数\nDATA_PATH=\"ETTh1\"\nSEQ_LEN=96\nPRED_LEN=336\nE_LAYER=1\nD_LAYER=1\nEPOCHS=150\nPATIENCE=10\nSEED=2088\nLRADJ=\"type1\"\nEMBED_VERSION=\"qwen3_0.6b\"\nMODEL_ID=\"T3Time_FreTS_Gated_Qwen_Hyperopt\"\n\n# 完整搜索空间（基于原版 T3Time 和小波包模型的成功经验）\n# 注意：head 必须能整除 channel，所以需要合理搭配\nCHANNELS=(128 256)\nDROPOUTS=(0.5 0.6 0.7)\n# Head 选择：64的因子=[1,2,4,8,16,32,64], 96的因子=[1,2,3,4,6,8,12,16,24,32,48,96], 128的因子=[1,2,4,8,16,32,64,128]\n# 选择共同的因子：8, 16，以及96特有的：6, 12\nHEADS=(8 16)\nLEARNING_RATES=(5e-5 7.5e-5 1e-4)\nWEIGHT_DECAYS=(1e-4 5e-4 1e-3 2e-3)\n# 注意：bash 数组元素之间用空格分隔，不能用逗号，否则会变成一个字符串 \"mse,smooth_l1\"\nLOSS_FNS=(\"mse\" \"smooth_l1\")\nBATCH_SIZES=(16 32)\n\n# 生成所有实验配置（只包含 channel 和 d_llm 都能被 head 整除的组合）\n# 注意：d_llm=1024，所以 head 必须是 1024 的因子（1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024）\nexperiments=()\nD_LLM=1024\nfor CHANNEL in \"${CHANNELS[@]}\"; do\n    for DROPOUT_N in \"${DROPOUTS[@]}\"; do\n        for HEAD in \"${HEADS[@]}\"; do\n            # 检查 channel 和 d_llm 是否都能被 head 整除\n            if [ $((CHANNEL % HEAD)) -eq 0 ] &amp;&amp; [ $((D_LLM % HEAD)) -eq 0 ]; then\n                for LEARNING_RATE in \"${LEARNING_RATES[@]}\"; do\n                    for WEIGHT_DECAY in \"${WEIGHT_DECAYS[@]}\"; do\n                        for LOSS_FN in \"${LOSS_FNS[@]}\"; do\n                            for BATCH_SIZE in \"${BATCH_SIZES[@]}\"; do\n                                experiments+=(\"${CHANNEL}|${DROPOUT_N}|${HEAD}|${LEARNING_RATE}|${WEIGHT_DECAY}|${LOSS_FN}|${BATCH_SIZE}\")\n                            done\n                        done\n                    done\n                done\n            fi\n        done\n    done\ndone\n\ntotal_exps=${#experiments[@]}\n\n# 如果不带任何参数调用脚本，则默认自动使用两张 GPU 并行跑完所有实验\nif [ \"$#\" -eq 0 ]; then\n    MID=$(((total_exps - 1) / 2))\n    echo \"==========================================\"\n    echo \"检测到未指定参数，启用默认双卡自动并行模式\"\n    echo \"总实验数: ${total_exps}，GPU0 跑 [0, ${MID}]，GPU1 跑 [$((MID + 1)), $((total_exps - 1))]\"\n    echo \"每卡并行数: ${PARALLEL}\"\n    echo \"==========================================\"\n    echo \"\"\n\n    # GPU0 跑前半段\n    CUDA_VISIBLE_DEVICES=0 bash \"$0\" 0 0 \"${MID}\" \"${PARALLEL}\" &amp;\n    PID0=$!\n\n    # GPU1 跑后半段\n    CUDA_VISIBLE_DEVICES=1 bash \"$0\" 1 \"$((MID + 1))\" \"$((total_exps - 1))\" \"${PARALLEL}\" &amp;\n    PID1=$!\n\n    # 等待两个子进程结束\n    wait \"${PID0}\" \"${PID1}\"\n    echo \"✅ 双卡自动并行超参搜索已完成\"\n    exit 0\nfi\n\nif [ ${END_IDX} -eq -1 ]; then\n    END_IDX=$((total_exps - 1))\nfi\n\nactual_exps=$((END_IDX - START_IDX + 1))\n\necho \"==========================================\"\necho \"T3Time_FreTS_Gated_Qwen_Hyperopt 并行参数寻优\"\necho \"GPU: ${GPU_ID}, 实验范围: [${START_IDX}, ${END_IDX}] / ${total_exps}\"\necho \"并行数: ${PARALLEL}\"\necho \"Seed: ${SEED}, Pred_Len: ${PRED_LEN}\"\necho \"目标: 超越当前最佳 MSE 0.462425，接近原版 T3Time 的 0.438817\"\necho \"\"\necho \"搜索空间:\"\necho \"  Channel: ${CHANNELS[@]}\"\necho \"  Dropout: ${DROPOUTS[@]}\"\necho \"  Head: ${HEADS[@]}\"\necho \"  Learning Rate: ${LEARNING_RATES[@]}\"\necho \"  Weight Decay: ${WEIGHT_DECAYS[@]}\"\necho \"  Loss Function: ${LOSS_FNS[@]} (MSE，与原版对齐)\"\necho \"  Batch Size: ${BATCH_SIZES[@]}\"\necho \"总实验数: ${total_exps}\"\necho \"当前GPU将运行: ${actual_exps} 个实验\"\necho \"==========================================\"\necho \"\"\n\n# 运行实验的函数\nrun_experiment() {\n    local exp_idx=$1\n    local exp_config=$2\n    local gpu_id=$3\n    \n    IFS='|' read -r CHANNEL DROPOUT_N HEAD LEARNING_RATE WEIGHT_DECAY LOSS_FN BATCH_SIZE &lt;&lt;&lt; \"${exp_config}\"\n    \n    log_file=\"${LOG_DIR}/pred${PRED_LEN}_c${CHANNEL}_d${DROPOUT_N}_h${HEAD}_lr${LEARNING_RATE}_wd${WEIGHT_DECAY}_loss${LOSS_FN}_bs${BATCH_SIZE}_seed${SEED}.log\"\n    \n    echo \"[实验 ${exp_idx}/${total_exps}] GPU${gpu_id} 开始...\"\n    echo \"  Channel: ${CHANNEL}, Dropout: ${DROPOUT_N}, Head: ${HEAD}\"\n    echo \"  LR: ${LEARNING_RATE}, WD: ${WEIGHT_DECAY}, Loss: ${LOSS_FN}, BS: ${BATCH_SIZE}\"\n    \n    python /root/0/T3Time/train_frets_gated_qwen.py \\\n        --data_path \"${DATA_PATH}\" \\\n        --batch_size \"${BATCH_SIZE}\" \\\n        --seq_len \"${SEQ_LEN}\" \\\n        --pred_len \"${PRED_LEN}\" \\\n        --epochs \"${EPOCHS}\" \\\n        --es_patience \"${PATIENCE}\" \\\n        --seed \"${SEED}\" \\\n        --channel \"${CHANNEL}\" \\\n        --learning_rate \"${LEARNING_RATE}\" \\\n        --dropout_n \"${DROPOUT_N}\" \\\n        --weight_decay \"${WEIGHT_DECAY}\" \\\n        --e_layer \"${E_LAYER}\" \\\n        --d_layer \"${D_LAYER}\" \\\n        --head \"${HEAD}\" \\\n        --loss_fn \"${LOSS_FN}\" \\\n        --lradj \"${LRADJ}\" \\\n        --embed_version \"${EMBED_VERSION}\" \\\n        --model_id \"${MODEL_ID}\" \\\n        &gt; \"${log_file}\" 2&gt;&amp;1\n    \n    exit_code=$?\n    if [ $exit_code -eq 0 ]; then\n        echo \"  ✅ GPU${gpu_id} 实验 ${exp_idx} 完成\"\n    else\n        echo \"  ⚠️  GPU${gpu_id} 实验 ${exp_idx} 失败 (退出码: ${exit_code})\"\n    fi\n}\n\n# 并行运行实验\ncurrent_idx=${START_IDX}\nrunning_jobs=0\n\nwhile [ ${current_idx} -le ${END_IDX} ]; do\n    # 等待有空闲槽位\n    while [ ${running_jobs} -ge ${PARALLEL} ]; do\n        sleep 5\n        # 检查正在运行的作业数\n        running_jobs=$(jobs -r | wc -l)\n    done\n    \n    # 启动新实验\n    exp_config=${experiments[${current_idx}]}\n    run_experiment ${current_idx} \"${exp_config}\" ${GPU_ID} &amp;\n    \n    current_idx=$((current_idx + 1))\n    running_jobs=$(jobs -r | wc -l)\n    \n    echo \"  当前运行中: ${running_jobs}/${PARALLEL} 个实验\"\ndone\n\n# 等待所有作业完成\necho \"\"\necho \"等待所有实验完成...\"\nwait\n\necho \"==========================================\"\necho \"✅ GPU${GPU_ID} 所有实验完成！\"\necho \"==========================================\"\necho \"结果已追加到: ${RESULT_LOG}\"\necho \"日志文件保存在: ${LOG_DIR}\"\necho \"\"\n",
     "languageId": "shellscript"
   }
 }
 ```
+Result:
+
+```json
+{
+  "diff": {
+    "chunks": [
+      {
+        "diffString": "  \n  total_exps=${#experiments[@]}\n+ \n+ # 如果不带任何参数调用脚本，则默认自动使用两张 GPU 并行跑完所有实验\n+ if [ \"$#\" -eq 0 ]; then\n+     MID=$(((total_exps - 1) / 2))\n+     echo \"==========================================\"\n+     echo \"检测到未指定参数，启用默认双卡自动并行模式\"\n+     echo \"总实验数: ${total_exps}，GPU0 跑 [0, ${MID}]，GPU1 跑 [$((MID + 1)), $((total_exps - 1))]\"\n+     echo \"每卡并行数: ${PARALLEL}\"\n+     echo \"==========================================\"\n+     echo \"\"\n+ \n+     # GPU0 跑前半段\n+     CUDA_VISIBLE_DEVICES=0 bash \"$0\" 0 0 \"${MID}\" \"${PARALLEL}\" &amp;\n+     PID0=$!\n+ \n+     # GPU1 跑后半段\n+     CUDA_VISIBLE_DEVICES=1 bash \"$0\" 1 \"$((MID + 1))\" \"$((total_exps - 1))\" \"${PARALLEL}\" &amp;\n+     PID1=$!\n+ \n+     # 等待两个子进程结束\n+     wait \"${PID0}\" \"${PID1}\"\n+     echo \"✅ 双卡自动并行超参搜索已完成\"\n+     exit 0\n+ fi\n+ \n  if [ ${END_IDX} -eq -1 ]; then\n      END_IDX=$((total_exps - 1))",
+        "oldStart": 78,
+        "newStart": 78,
+        "oldLines": 4,
+        "newLines": 29,
+        "linesAdded": 25
+      }
+    ],
+    "editor": "EDITOR_AI"
+  },
+  "shouldAutoFixLints": true,
+  "resultForModel": "Success. Updated the following files:\nM /root/0/T3Time/scripts/T3Time_FreTS_FusionExp/hyperopt_pred720_seed2088_parallel.sh",
+  "contentsAfterEdit": "#!/bin/bash\n# T3Time_FreTS_Gated_Qwen_Hyperopt 并行参数寻优脚本\n# 支持多GPU并行运行，可以指定GPU ID和实验范围\n\nset -uo pipefail\n\n# 清理可能的环境变量问题\nunset __vsc_prompt_cmd_original 2&gt;/dev/null || true\n\n# 激活 conda 环境\neval \"$(conda shell.bash hook)\" 2&gt;/dev/null || true\nconda activate TimeCMA_Qwen3 2&gt;/dev/null || source activate TimeCMA_Qwen3 2&gt;/dev/null || true\n\n# 设置环境变量\nexport PYTHONPATH=\"/root/0/T3Time:${PYTHONPATH-}\"\nexport PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True\n\n# 参数解析\nGPU_ID=${1:-0}  # 默认 GPU 0\nSTART_IDX=${2:-0}  # 默认从第0个实验开始\nEND_IDX=${3:--1}  # 默认到最后一个实验（-1表示全部）\nPARALLEL=${4:-4}  # 默认同时运行4个实验\n\nexport CUDA_VISIBLE_DEVICES=${GPU_ID}\n\nLOG_DIR=\"/root/0/T3Time/Results/T3Time_FreTS_Gated_Qwen_Hyperopt/ETTh1\"\nRESULT_LOG=\"/root/0/T3Time/experiment_results.log\"\nmkdir -p \"${LOG_DIR}\"\n\n# 固定参数\nDATA_PATH=\"ETTh1\"\nSEQ_LEN=96\nPRED_LEN=336\nE_LAYER=1\nD_LAYER=1\nEPOCHS=150\nPATIENCE=10\nSEED=2088\nLRADJ=\"type1\"\nEMBED_VERSION=\"qwen3_0.6b\"\nMODEL_ID=\"T3Time_FreTS_Gated_Qwen_Hyperopt\"\n\n# 完整搜索空间（基于原版 T3Time 和小波包模型的成功经验）\n# 注意：head 必须能整除 channel，所以需要合理搭配\nCHANNELS=(128 256)\nDROPOUTS=(0.5 0.6 0.7)\n# Head 选择：64的因子=[1,2,4,8,16,32,64], 96的因子=[1,2,3,4,6,8,12,16,24,32,48,96], 128的因子=[1,2,4,8,16,32,64,128]\n# 选择共同的因子：8, 16，以及96特有的：6, 12\nHEADS=(8 16)\nLEARNING_RATES=(5e-5 7.5e-5 1e-4)\nWEIGHT_DECAYS=(1e-4 5e-4 1e-3 2e-3)\n# 注意：bash 数组元素之间用空格分隔，不能用逗号，否则会变成一个字符串 \"mse,smooth_l1\"\nLOSS_FNS=(\"mse\" \"smooth_l1\")\nBATCH_SIZES=(16 32)\n\n# 生成所有实验配置（只包含 channel 和 d_llm 都能被 head 整除的组合）\n# 注意：d_llm=1024，所以 head 必须是 1024 的因子（1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024）\nexperiments=()\nD_LLM=1024\nfor CHANNEL in \"${CHANNELS[@]}\"; do\n    for DROPOUT_N in \"${DROPOUTS[@]}\"; do\n        for HEAD in \"${HEADS[@]}\"; do\n            # 检查 channel 和 d_llm 是否都能被 head 整除\n            if [ $((CHANNEL % HEAD)) -eq 0 ] &amp;&amp; [ $((D_LLM % HEAD)) -eq 0 ]; then\n                for LEARNING_RATE in \"${LEARNING_RATES[@]}\"; do\n                    for WEIGHT_DECAY in \"${WEIGHT_DECAYS[@]}\"; do\n                        for LOSS_FN in \"${LOSS_FNS[@]}\"; do\n                            for BATCH_SIZE in \"${BATCH_SIZES[@]}\"; do\n                                experiments+=(\"${CHANNEL}|${DROPOUT_N}|${HEAD}|${LEARNING_RATE}|${WEIGHT_DECAY}|${LOSS_FN}|${BATCH_SIZE}\")\n                            done\n                        done\n                    done\n                done\n            fi\n        done\n    done\ndone\n\ntotal_exps=${#experiments[@]}\n\n# 如果不带任何参数调用脚本，则默认自动使用两张 GPU 并行跑完所有实验\nif [ \"$#\" -eq 0 ]; then\n    MID=$(((total_exps - 1) / 2))\n    echo \"==========================================\"\n    echo \"检测到未指定参数，启用默认双卡自动并行模式\"\n    echo \"总实验数: ${total_exps}，GPU0 跑 [0, ${MID}]，GPU1 跑 [$((MID + 1)), $((total_exps - 1))]\"\n    echo \"每卡并行数: ${PARALLEL}\"\n    echo \"==========================================\"\n    echo \"\"\n\n    # GPU0 跑前半段\n    CUDA_VISIBLE_DEVICES=0 bash \"$0\" 0 0 \"${MID}\" \"${PARALLEL}\" &amp;\n    PID0=$!\n\n    # GPU1 跑后半段\n    CUDA_VISIBLE_DEVICES=1 bash \"$0\" 1 \"$((MID + 1))\" \"$((total_exps - 1))\" \"${PARALLEL}\" &amp;\n    PID1=$!\n\n    # 等待两个子进程结束\n    wait \"${PID0}\" \"${PID1}\"\n    echo \"✅ 双卡自动并行超参搜索已完成\"\n    exit 0\nfi\n\nif [ ${END_IDX} -eq -1 ]; then\n    END_IDX=$((total_exps - 1))\nfi\n\nactual_exps=$((END_IDX - START_IDX + 1))\n\necho \"==========================================\"\necho \"T3Time_FreTS_Gated_Qwen_Hyperopt 并行参数寻优\"\necho \"GPU: ${GPU_ID}, 实验范围: [${START_IDX}, ${END_IDX}] / ${total_exps}\"\necho \"并行数: ${PARALLEL}\"\necho \"Seed: ${SEED}, Pred_Len: ${PRED_LEN}\"\necho \"目标: 超越当前最佳 MSE 0.462425，接近原版 T3Time 的 0.438817\"\necho \"\"\necho \"搜索空间:\"\necho \"  Channel: ${CHANNELS[@]}\"\necho \"  Dropout: ${DROPOUTS[@]}\"\necho \"  Head: ${HEADS[@]}\"\necho \"  Learning Rate: ${LEARNING_RATES[@]}\"\necho \"  Weight Decay: ${WEIGHT_DECAYS[@]}\"\necho \"  Loss Function: ${LOSS_FNS[@]} (MSE，与原版对齐)\"\necho \"  Batch Size: ${BATCH_SIZES[@]}\"\necho \"总实验数: ${total_exps}\"\necho \"当前GPU将运行: ${actual_exps} 个实验\"\necho \"==========================================\"\necho \"\"\n\n# 运行实验的函数\nrun_experiment() {\n    local exp_idx=$1\n    local exp_config=$2\n    local gpu_id=$3\n    \n    IFS='|' read -r CHANNEL DROPOUT_N HEAD LEARNING_RATE WEIGHT_DECAY LOSS_FN BATCH_SIZE &lt;&lt;&lt; \"${exp_config}\"\n    \n    log_file=\"${LOG_DIR}/pred${PRED_LEN}_c${CHANNEL}_d${DROPOUT_N}_h${HEAD}_lr${LEARNING_RATE}_wd${WEIGHT_DECAY}_loss${LOSS_FN}_bs${BATCH_SIZE}_seed${SEED}.log\"\n    \n    echo \"[实验 ${exp_idx}/${total_exps}] GPU${gpu_id} 开始...\"\n    echo \"  Channel: ${CHANNEL}, Dropout: ${DROPOUT_N}, Head: ${HEAD}\"\n    echo \"  LR: ${LEARNING_RATE}, WD: ${WEIGHT_DECAY}, Loss: ${LOSS_FN}, BS: ${BATCH_SIZE}\"\n    \n    python /root/0/T3Time/train_frets_gated_qwen.py \\\n        --data_path \"${DATA_PATH}\" \\\n        --batch_size \"${BATCH_SIZE}\" \\\n        --seq_len \"${SEQ_LEN}\" \\\n        --pred_len \"${PRED_LEN}\" \\\n        --epochs \"${EPOCHS}\" \\\n        --es_patience \"${PATIENCE}\" \\\n        --seed \"${SEED}\" \\\n        --channel \"${CHANNEL}\" \\\n        --learning_rate \"${LEARNING_RATE}\" \\\n        --dropout_n \"${DROPOUT_N}\" \\\n        --weight_decay \"${WEIGHT_DECAY}\" \\\n        --e_layer \"${E_LAYER}\" \\\n        --d_layer \"${D_LAYER}\" \\\n        --head \"${HEAD}\" \\\n        --loss_fn \"${LOSS_FN}\" \\\n        --lradj \"${LRADJ}\" \\\n        --embed_version \"${EMBED_VERSION}\" \\\n        --model_id \"${MODEL_ID}\" \\\n        &gt; \"${log_file}\" 2&gt;&amp;1\n    \n    exit_code=$?\n    if [ $exit_code -eq 0 ]; then\n        echo \"  ✅ GPU${gpu_id} 实验 ${exp_idx} 完成\"\n    else\n        echo \"  ⚠️  GPU${gpu_id} 实验 ${exp_idx} 失败 (退出码: ${exit_code})\"\n    fi\n}\n\n# 并行运行实验\ncurrent_idx=${START_IDX}\nrunning_jobs=0\n\nwhile [ ${current_idx} -le ${END_IDX} ]; do\n    # 等待有空闲槽位\n    while [ ${running_jobs} -ge ${PARALLEL} ]; do\n        sleep 5\n        # 检查正在运行的作业数\n        running_jobs=$(jobs -r | wc -l)\n    done\n    \n    # 启动新实验\n    exp_config=${experiments[${current_idx}]}\n    run_experiment ${current_idx} \"${exp_config}\" ${GPU_ID} &amp;\n    \n    current_idx=$((current_idx + 1))\n    running_jobs=$(jobs -r | wc -l)\n    \n    echo \"  当前运行中: ${running_jobs}/${PARALLEL} 个实验\"\ndone\n\n# 等待所有作业完成\necho \"\"\necho \"等待所有实验完成...\"\nwait\n\necho \"==========================================\"\necho \"✅ GPU${GPU_ID} 所有实验完成！\"\necho \"==========================================\"\necho \"结果已追加到: ${RESULT_LOG}\"\necho \"日志文件保存在: ${LOG_DIR}\"\necho \"\"\n"
+}
+```
 User decision: **accepted**
 
-Status: **loading**
+Status: **completed**
 
 
 </details>
@@ -28181,7 +28203,119 @@ Status: **loading**
 
 ---
 
+已经给脚本加好了“默认双卡一起跑”的逻辑，现在行为是：
 
+### 新的默认行为（不带参数）
+
+直接运行：
+
+```bash
+bash /root/0/T3Time/scripts/T3Time_FreTS_FusionExp/hyperopt_pred720_seed2088_parallel.sh
+```
+
+会自动：
+
+1. 先在脚本内部生成全部实验组合，得到 `total_exps`。
+2. 把实验索引区间按一半一半切开：
+   - GPU0：`[0, MID]`
+   - GPU1：`[MID+1, total_exps-1]`
+3. 启动两个子进程并行跑：
+
+```bash
+CUDA_VISIBLE_DEVICES=0 bash "$0" 0 0 MID PARALLEL  &
+CUDA_VISIBLE_DEVICES=1 bash "$0" 1 MID+1 total_exps-1 PARALLEL &
+wait
+```
+
+跑完后父进程打印一行 `✅ 双卡自动并行超参搜索已完成`。
+
+### 仍然支持手动单卡/自定义区间
+
+如果你需要手动控制某张卡或只跑一部分实验，还是可以照旧传参，例如：
+
+```bash
+# 只在卡0上跑全部
+bash hyperopt_pred720_seed2088_parallel.sh 0 0 -1 4
+
+# 只在卡1上跑一部分
+bash hyperopt_pred720_seed2088_parallel.sh 1 100 199 4
+```
+
+不带参数时就是你想要的“默认两张卡一起跑”。
+
+---
+
+_**User (2026-01-06 07:11Z)**_
+
+@bash (5-7) 这啥意思呀
+
+---
+
+_**Agent (model default, mode Agent)**_
+
+<think><details><summary>Thought Process</summary>
+**Explaining Git Push Error**
+
+I see the user is asking about a Git push error: “403 permission denied.” This usually means there’s an issue with permissions on the repository. To fix it, the user might want to check if they're authenticated correctly or if they have the right access to the repository. I’m thinking of presenting this explanation in Chinese, keeping it as simple and direct as possible since no tools are needed for this.</details></think>
+
+---
+
+这三行的意思是：
+
+- `Permission to ... denied to Shulamith24.`：你当前用的 GitHub 账号（`Shulamith24`）**没有推送到仓库 `yangqingyuan-byte/t3time-frets-gated-qwen` 的权限**（这是别人账号名下的仓库）。
+- `error: 403`：HTTP 403 表示**权限不足/被禁止访问**。
+- 所以 `git push` 失败了，远程仓库拒绝你的推送。
+
+如果你想推代码，有几种办法：
+
+- **在 GitHub 上 Fork 一份**这个仓库到你自己的账号，然后把本地仓库的 `origin` 改成你自己的 fork，再 `git push`；
+- 或者让 `yangqingyuan-byte` 把你的 GitHub 账号 `Shulamith24` 加到这个仓库的协作者（collaborator），你再用有权限的 token/账号重新登录后推送；
+- 或者改用 SSH + 有权限的 key：配置好 SSH key，并确保对应 GitHub 账号对该仓库有写权限。
+
+---
+
+_**User (2026-01-06 07:11Z)**_
+
+我怎么看当前的github账号呀
+
+---
+
+_**Agent (model default, mode Agent)**_
+
+
+
+---
+
+最直接有两种查看方式：
+
+### 1. 从刚才报错里看（推送用的账号）
+你刚才的错误信息里已经写了：
+
+```text
+Permission to yangqingyuan-byte/t3time-frets-gated-qwen.git denied to Shulamith24.
+```
+
+这里的 `Shulamith24` 就是当前用来推送的 GitHub 账号。
+
+### 2. 用 git 命令看本地配置的用户名/邮箱
+
+在项目目录下执行：
+
+```bash
+git config user.name
+git config user.email
+```
+
+如果没设置在本仓库，可以看全局配置：
+
+```bash
+git config --global user.name
+git config --global user.email
+```
+
+注意：  
+- `user.name` / `user.email` 只是本地 Git 的签名信息，不一定等于你真正登录 GitHub 时用的账号名，但通常是你自己设的标识。  
+- 真正推送用的账号是你 HTTPS/SSH 登录 GitHub 时的账号，这次报错已经告诉你是 `Shulamith24`。
 
 ---
 
