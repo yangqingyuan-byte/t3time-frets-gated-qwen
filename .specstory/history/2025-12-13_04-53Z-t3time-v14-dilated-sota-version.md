@@ -6,1648 +6,6 @@
 
 _**User (2026-01-04 01:01Z)**_
 
-@scripts/ETTh1.sh 参考这个文件写一个脚本，预测96,192,336和720四个时间长度，前台运行，然后写一个分析脚本，分析刚刚运行的四个结果，不要编写说明文档，我来云
-
----
-
-_**Agent (model default, mode Agent)**_
-
-
-
----
-
-
-查看 `scripts/ETTh1.sh` 的结构，并检查训练脚本的参数：
-
-
----
-
-<tool-use data-tool-type="read" data-tool-name="read_file">
-<details><summary>Tool use: **read_file** • Read file: /root/0/T3Time/scripts/ETTh1.sh</summary>
-
-</details>
-</tool-use>
-
----
-
-<tool-use data-tool-type="read" data-tool-name="read_file">
-<details><summary>Tool use: **read_file** • Read file: /root/0/T3Time/train.py</summary>
-
-</details>
-</tool-use>
-
----
-
-<tool-use data-tool-type="search" data-tool-name="codebase_search">
-<details>
-                <summary>Tool use: **codebase_search** • Searched codebase "How to analyze experiment results from train.py for different prediction lengths?" • **15** results</summary>
-            
-| File | Lines |
-|------|-------|
-| `scripts/T3Time_FreTS_FusionExp/analyze_longseq_v2_results.py` | L14-97 |
-| `筛选分析实验结果.py` | L44-122 |
-| `scripts/T3Time_FreTS_FusionExp/analyze_longseq_results.py` | L57-152 |
-| `scripts/T3Time_FreTS_FusionExp/analyze_longseq_results.py` | L55 |
-| `scripts/T3Time_FreTS_FusionExp/LONGSEQ_README.md` | L53-129 |
-| `scripts/T3Time_FreTS_FusionExp/analyze_longseq_results.py` | L16-75 |
-| `scripts/T3Time_FreTS_FusionExp/compare_t3time_models.py` | L45-183 |
-| `scripts/T3Time_FreTS_FusionExp/analyze_longseq_results.py` | L75-168 |
-| `scripts/T3Time_FreTS_FusionExp/train_longseq_v2_multi_predlen.sh` | L69-130 |
-| `scripts/T3Time_FreTS_FusionExp/analyze_longseq_v2_results.py` | L35-110 |
-| `scripts/T3Time_FreTS_FusionExp/compare_longseq_models.py` | L16-164 |
-| `scripts/analyze_scale_results.py` | L113 |
-| `scripts/find_best_hyperparams.py` | L19-91 |
-| `筛选分析实验结果.py` | L48-240 |
-| `scripts/T3Time_FreTS_FusionExp/train_longseq_v2.sh` | L49-101 |
-
-</details>
-</tool-use>
-
----
-
-
-
----
-
-
-创建训练脚本和分析脚本：
-
-
----
-
-<tool-use data-tool-type="write" data-tool-name="write">
-
-<details><summary>Tool use: **write** • Edit file: /root/0/T3Time/scripts/train_etth1_multi_predlen.sh</summary>
-
-**Chunk 1**
-Lines added: 139, lines removed: 1
-
-```diff
-@@ -1,1 +1,139 @@
-- 
-+ #!/bin/bash
-+ set -uo pipefail
-+ 
-+ unset __vsc_prompt_cmd_original 2&gt;/dev/null || true
-+ eval "$(conda shell.bash hook)" 2&gt;/dev/null || true
-+ conda activate TimeCMA_Qwen3 2&gt;/dev/null || source activate TimeCMA_Qwen3 2&gt;/dev/null || true
-+ 
-+ export PYTHONPATH="/root/0/T3Time:${PYTHONPATH-}"
-+ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
-+ export CUDA_VISIBLE_DEVICES=0
-+ 
-+ data_path="ETTh1"
-+ seq_len=96
-+ batch_size=16
-+ 
-+ log_path="./Results/${data_path}/"
-+ mkdir -p $log_path
-+ 
-+ echo "=========================================="
-+ echo "ETTh1 多预测长度训练"
-+ echo "预测长度: 96, 192, 336, 720"
-+ echo "=========================================="
-+ echo ""
-+ 
-+ # pred_len 96
-+ echo "[1/4] 训练: pred_len=96"
-+ pred_len=96
-+ learning_rate=1e-4
-+ channel=256
-+ e_layer=1
-+ d_layer=1
-+ dropout_n=0.4
-+ 
-+ log_file="${log_path}i${seq_len}_o${pred_len}_lr${learning_rate}_c${channel}_el${e_layer}_dl${d_layer}_dn${dropout_n}_bs${batch_size}.log"
-+ python train.py \
-+   --data_path $data_path \
-+   --batch_size 256 \
-+   --num_nodes 7 \
-+   --seq_len $seq_len \
-+   --pred_len $pred_len \
-+   --epochs 150 \
-+   --seed 2024 \
-+   --channel $channel \
-+   --learning_rate $learning_rate \
-+   --dropout_n $dropout_n \
-+   --e_layer $e_layer \
-+   --d_layer $d_layer | tee $log_file
-+ 
-+ echo "✅ pred_len=96 训练完成"
-+ echo ""
-+ 
-+ # pred_len 192
-+ echo "[2/4] 训练: pred_len=192"
-+ pred_len=192
-+ learning_rate=1e-4
-+ channel=256
-+ e_layer=1
-+ d_layer=2
-+ dropout_n=0.6
-+ 
-+ log_file="${log_path}i${seq_len}_o${pred_len}_lr${learning_rate}_c${channel}_el${e_layer}_dl${d_layer}_dn${dropout_n}_bs${batch_size}.log"
-+ python train.py \
-+   --data_path $data_path \
-+   --batch_size 32 \
-+   --num_nodes 7 \
-+   --seq_len $seq_len \
-+   --pred_len $pred_len \
-+   --epochs 150 \
-+   --seed 2024 \
-+   --channel $channel \
-+   --learning_rate $learning_rate \
-+   --dropout_n $dropout_n \
-+   --e_layer $e_layer \
-+   --d_layer $d_layer | tee $log_file
-+ 
-+ echo "✅ pred_len=192 训练完成"
-+ echo ""
-+ 
-+ # pred_len 336
-+ echo "[3/4] 训练: pred_len=336"
-+ pred_len=336
-+ learning_rate=1e-4
-+ channel=64
-+ dropout_n=0.7
-+ e_layer=1
-+ d_layer=2
-+ 
-+ log_file="${log_path}i${seq_len}_o${pred_len}_lr${learning_rate}_c${channel}_el${e_layer}_dl${d_layer}_dn${dropout_n}_bs${batch_size}.log"
-+ python train.py \
-+   --data_path $data_path \
-+   --batch_size $batch_size \
-+   --num_nodes 7 \
-+   --seq_len $seq_len \
-+   --pred_len $pred_len \
-+   --epochs 120 \
-+   --seed 2024 \
-+   --channel $channel \
-+   --learning_rate $learning_rate \
-+   --dropout_n $dropout_n \
-+   --e_layer $e_layer \
-+   --d_layer $d_layer | tee $log_file
-+ 
-+ echo "✅ pred_len=336 训练完成"
-+ echo ""
-+ 
-+ # pred_len 720
-+ echo "[4/4] 训练: pred_len=720"
-+ pred_len=720
-+ learning_rate=1e-4
-+ channel=64
-+ dropout_n=0.5
-+ e_layer=3
-+ d_layer=4
-+ 
-+ log_file="${log_path}i${seq_len}_o${pred_len}_lr${learning_rate}_c${channel}_el${e_layer}_dl${d_layer}_dn${dropout_n}_bs${batch_size}.log"
-+ python train.py \
-+   --data_path $data_path \
-+   --batch_size 32 \
-+   --num_nodes 7 \
-+   --seq_len $seq_len \
-+   --pred_len $pred_len \
-+   --epochs 150 \
-+   --seed 2024 \
-+   --channel $channel \
-+   --head 8 \
-+   --learning_rate $learning_rate \
-+   --dropout_n $dropout_n \
-+   --e_layer $e_layer \
-+   --d_layer $d_layer | tee $log_file
-+ 
-+ echo "✅ pred_len=720 训练完成"
-+ echo ""
-+ 
-+ echo "=========================================="
-+ echo "✅ 所有训练完成！"
-+ echo "=========================================="
-+ echo "查看结果: python scripts/analyze_etth1_results.py"
-+ echo "=========================================="
-+ 
-```
-
-</details>
-
-</tool-use>
-
----
-
-<tool-use data-tool-type="write" data-tool-name="write">
-
-<details><summary>Tool use: **write** • Edit file: /root/0/T3Time/scripts/analyze_etth1_results.py</summary>
-
-**Chunk 1**
-Lines added: 174, lines removed: 1
-
-```diff
-@@ -1,1 +1,174 @@
-- 
-+ #!/usr/bin/env python3
-+ # -*- coding: utf-8 -*-
-+ """
-+ 分析 ETTh1 多预测长度实验结果
-+ """
-+ import json
-+ import os
-+ import sys
-+ from collections import defaultdict
-+ from datetime import datetime
-+ 
-+ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-+ if project_root not in sys.path:
-+     sys.path.insert(0, project_root)
-+ 
-+ def load_recent_results(result_file=None, data_path="ETTh1", model_name="T3Time", pred_lens=[96, 192, 336, 720], seed=2024, limit=4):
-+     """加载最近的实验结果"""
-+     if result_file is None:
-+         result_file = os.path.join(project_root, "experiment_results.log")
-+     
-+     results = []
-+     
-+     if not os.path.exists(result_file):
-+         print(f"❌ 结果文件不存在: {result_file}")
-+         return results
-+     
-+     with open(result_file, 'r', encoding='utf-8') as f:
-+         lines = f.readlines()
-+     
-+     # 从后往前读取，找到最近的匹配结果
-+     for line in reversed(lines):
-+         if not line.strip():
-+             continue
-+         try:
-+             data = json.loads(line.strip())
-+             if (data.get('model') == model_name and 
-+                 data.get('data_path') == data_path and
-+                 data.get('pred_len') in pred_lens and
-+                 data.get('seed') == seed):
-+                 results.append(data)
-+                 if len(results) &gt;= limit:
-+                     break
-+         except:
-+             continue
-+     
-+     return results
-+ 
-+ def analyze_results(results):
-+     print("="*80)
-+     print("ETTh1 多预测长度实验结果分析")
-+     print("="*80)
-+     
-+     if not results:
-+         print("\n❌ 未找到实验结果")
-+         return
-+     
-+     print(f"\n找到 {len(results)} 条实验结果\n")
-+     
-+     # 按预测长度组织数据
-+     pred_len_data = {}
-+     for r in results:
-+         pred_len = r.get('pred_len')
-+         if pred_len not in pred_len_data:
-+             pred_len_data[pred_len] = r
-+     
-+     # 按预测长度排序
-+     pred_lens = sorted([k for k in pred_len_data.keys()])
-+     
-+     # 打印结果表格
-+     print("="*80)
-+     print("实验结果汇总")
-+     print("="*80)
-+     print(f"{'预测长度':&lt;12} {'MSE':&lt;15} {'MAE':&lt;15} {'Channel':&lt;10} {'Dropout':&lt;10} {'E_Layer':&lt;10} {'D_Layer':&lt;10}")
-+     print("-"*80)
-+     
-+     for pred_len in pred_lens:
-+         r = pred_len_data[pred_len]
-+         print(f"{pred_len:&lt;12} "
-+               f"{r.get('test_mse', 'N/A'):&lt;15.6f} "
-+               f"{r.get('test_mae', 'N/A'):&lt;15.6f} "
-+               f"{r.get('channel', 'N/A'):&lt;10} "
-+               f"{r.get('dropout_n', 'N/A'):&lt;10.2f} "
-+               f"{r.get('e_layer', 'N/A'):&lt;10} "
-+               f"{r.get('d_layer', 'N/A'):&lt;10}")
-+     
-+     # 详细参数
-+     print("\n" + "="*80)
-+     print("详细参数配置")
-+     print("="*80)
-+     
-+     for pred_len in pred_lens:
-+         r = pred_len_data[pred_len]
-+         print(f"\n预测长度: {pred_len}")
-+         print("-"*80)
-+         print(f"  MSE: {r.get('test_mse', 'N/A'):.6f}")
-+         print(f"  MAE: {r.get('test_mae', 'N/A'):.6f}")
-+         print(f"  Seed: {r.get('seed', 'N/A')}")
-+         print(f"  Channel: {r.get('channel', 'N/A')}")
-+         print(f"  Batch Size: {r.get('batch_size', 'N/A')}")
-+         print(f"  Learning Rate: {r.get('learning_rate', 'N/A')}")
-+         print(f"  Dropout: {r.get('dropout_n', 'N/A')}")
-+         print(f"  E_Layer: {r.get('e_layer', 'N/A')}")
-+         print(f"  D_Layer: {r.get('d_layer', 'N/A')}")
-+         print(f"  Head: {r.get('head', 8)}")
-+         print(f"  Embed Version: {r.get('embed_version', 'N/A')}")
-+         print(f"  时间戳: {r.get('timestamp', 'N/A')}")
-+     
-+     # 性能趋势
-+     print("\n" + "="*80)
-+     print("性能趋势分析")
-+     print("="*80)
-+     
-+     mse_list = [pred_len_data[p].get('test_mse', float('inf')) for p in pred_lens]
-+     mae_list = [pred_len_data[p].get('test_mae', float('inf')) for p in pred_lens]
-+     
-+     print(f"\nMSE 变化:")
-+     for i, pred_len in enumerate(pred_lens):
-+         if i &gt; 0:
-+             change = mse_list[i] - mse_list[i-1]
-+             change_pct = (change / mse_list[i-1]) * 100 if mse_list[i-1] &gt; 0 else 0
-+             print(f"  {pred_lens[i-1]} -&gt; {pred_len}: {change:+.6f} ({change_pct:+.2f}%)")
-+         print(f"  {pred_len}: {mse_list[i]:.6f}")
-+     
-+     print(f"\nMAE 变化:")
-+     for i, pred_len in enumerate(pred_lens):
-+         if i &gt; 0:
-+             change = mae_list[i] - mae_list[i-1]
-+             change_pct = (change / mae_list[i-1]) * 100 if mae_list[i-1] &gt; 0 else 0
-+             print(f"  {pred_lens[i-1]} -&gt; {pred_len}: {change:+.6f} ({change_pct:+.2f}%)")
-+         print(f"  {pred_len}: {mae_list[i]:.6f}")
-+     
-+     # 最佳和最差结果
-+     print("\n" + "="*80)
-+     print("最佳和最差结果")
-+     print("="*80)
-+     
-+     best_mse_idx = min(range(len(mse_list)), key=lambda i: mse_list[i])
-+     worst_mse_idx = max(range(len(mse_list)), key=lambda i: mse_list[i])
-+     
-+     print(f"\n最佳 MSE: pred_len={pred_lens[best_mse_idx]}, MSE={mse_list[best_mse_idx]:.6f}, MAE={mae_list[best_mse_idx]:.6f}")
-+     print(f"最差 MSE: pred_len={pred_lens[worst_mse_idx]}, MSE={mse_list[worst_mse_idx]:.6f}, MAE={mae_list[worst_mse_idx]:.6f}")
-+     
-+     best_mae_idx = min(range(len(mae_list)), key=lambda i: mae_list[i])
-+     worst_mae_idx = max(range(len(mae_list)), key=lambda i: mae_list[i])
-+     
-+     print(f"\n最佳 MAE: pred_len={pred_lens[best_mae_idx]}, MSE={mse_list[best_mae_idx]:.6f}, MAE={mae_list[best_mae_idx]:.6f}")
-+     print(f"最差 MAE: pred_len={pred_lens[worst_mae_idx]}, MSE={mse_list[worst_mae_idx]:.6f}, MAE={mae_list[worst_mae_idx]:.6f}")
-+ 
-+ def main():
-+     import argparse
-+     parser = argparse.ArgumentParser(description='分析 ETTh1 多预测长度实验结果')
-+     parser.add_argument('--result_file', type=str, default=None, help='结果文件路径')
-+     parser.add_argument('--data_path', type=str, default='ETTh1', help='数据集名称')
-+     parser.add_argument('--seed', type=int, default=2024, help='随机种子')
-+     parser.add_argument('--pred_lens', type=int, nargs='+', default=[96, 192, 336, 720], help='预测长度列表')
-+     args = parser.parse_args()
-+     
-+     results = load_recent_results(
-+         result_file=args.result_file,
-+         data_path=args.data_path,
-+         seed=args.seed,
-+         pred_lens=args.pred_lens,
-+         limit=len(args.pred_lens)
-+     )
-+     
-+     analyze_results(results)
-+     
-+     print("\n" + "="*80)
-+     print("分析完成！")
-+     print("="*80)
-+ 
-+ if __name__ == "__main__":
-+     main()
-+ 
-```
-
-</details>
-
-</tool-use>
-
----
-
-<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
-<details><summary>Tool use: **run_terminal_cmd** • Run command: cd /root/0/T3Time && chmod +x scripts/train_etth1_multi_predlen.sh scripts/analyze_etth1_results.py && bash -n scripts/train_etth1_multi_predlen.sh && python3 -m py_compile scripts/analyze_etth1_results.py && echo "✅ 所有脚本语法检查通过"</summary>
-
-```bash
-cd /root/0/T3Time && chmod +x scripts/train_etth1_multi_predlen.sh scripts/analyze_etth1_results.py && bash -n scripts/train_etth1_multi_predlen.sh && python3 -m py_compile scripts/analyze_etth1_results.py && echo "✅ 所有脚本语法检查通过"
-```
-
-```
-✅ 所有脚本语法检查通过
-
-```
-</details>
-</tool-use>
-
----
-
-
-
----
-
-
-检查语法错误：
-
-
----
-
-<tool-use data-tool-type="generic" data-tool-name="read_lints">
-<details>
-          <summary>Tool use: **read_lints** • Read lints for 2 files</summary>
-      
-Lint paths:
-
-- `scripts/train_etth1_multi_predlen.sh`
-- `scripts/analyze_etth1_results.py`
-
-Lint results
-
-
-**No lint errors found**
-</details>
-</tool-use>
-
----
-
-
-
----
-
-
-已创建两个脚本：
-
-## 1. 训练脚本
-`scripts/train_etth1_multi_predlen.sh`
-- 参考 `ETTh1.sh` 的参数配置
-- 前台运行（去掉 `nohup` 和 `&`，使用 `tee` 同时输出到日志文件）
-- 依次训练 96, 192, 336, 720 四个预测长度
-- 每个预测长度使用对应的参数配置
-
-## 2. 分析脚本
-`scripts/analyze_etth1_results.py`
-- 从 `experiment_results.log` 读取最近的 T3Time 结果
-- 按预测长度汇总结果
-- 显示详细参数配置
-- 分析性能趋势（MSE/MAE 变化）
-- 标识最佳和最差结果
-
-## 使用方法
-
-```bash
-# 1. 运行训练脚本（前台运行）
-bash scripts/train_etth1_multi_predlen.sh
-
-# 2. 训练完成后，运行分析脚本
-python scripts/analyze_etth1_results.py
-```
-
-所有脚本已通过语法检查，可直接运行。
-
----
-
-_**User (2026-01-04 01:01Z)**_
-
-+----------------------------------+--------+----------+----------+--------------------------+
-| Model                            | Data   |      MSE |      MAE | Parameters               |
-+==================================+========+==========+==========+==========================+
-| T3Time_FreTS_Gated_Qwen          | ETTh1  | 0.059869 | 0.185416 | pred_len=96              |
-|                                  |        |          |          | seq_len=96               |
-|                                  |        |          |          | channel=64               |
-|                                  |        |          |          | batch_size=16            |
-|                                  |        |          |          | learning_rate=0.0001     |
-|                                  |        |          |          | seed=2024                |
-|                                  |        |          |          | dropout_n=0.1            |
-
-这个结果为什么我在实验日志中搜不到呢？
-
----
-
-_**Agent (model default, mode Agent)**_
-
-
-
----
-
-
-检查实验日志，查找该结果：
-
-
----
-
-<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
-<details><summary>Tool use: **run_terminal_cmd** • Run command: grep -i "T3Time_FreTS_Gated_Qwen" /root/0/T3Time/experiment_results.log | grep -i "seed=2024\|seed.*2024" | grep -i "pred_len.*96\|pred_len=96" | tail -10</summary>
-
-```bash
-grep -i "T3Time_FreTS_Gated_Qwen" /root/0/T3Time/experiment_results.log | grep -i "seed=2024\|seed.*2024" | grep -i "pred_len.*96\|pred_len=96" | tail -10
-```
-
-```
-{"model_id": "T3Time_FreTS_FusionExp", "data_path": "ETTh1", "pred_len": 720, "test_mse": 0.519043, "test_mae": 0.490141, "model": "T3Time_FreTS_Gated_Qwen_FusionExp", "timestamp": "2026-01-03 16:13:36", "seed": 2024, "seq_len": 96, "channel": 64, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 2, "fusion_mode": "gate", "loss_fn": "smooth_l1", "frets_scale": 0.018, "sparsity_threshold": 0.009, "lradj": "type1", "patience": 10, "gpu": 0, "embed_version": "qwen3_0.6b"}
-{"model_id": "T3Time_FreTS_FusionExp_gate", "data_path": "ETTh1", "pred_len": 720, "test_mse": 0.5189696550369263, "test_mae": 0.4894382953643799, "model": "T3Time_FreTS_Gated_Qwen_FusionExp", "timestamp": "2026-01-03 17:41:38", "seed": 2024, "seq_len": 96, "channel": 128, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 2, "d_layer": 2, "head": 8, "embed_version": "qwen3_0.6b", "fusion_mode": "gate", "sparsity_threshold": 0.009, "frets_scale": 0.018}
-{"model_id": "T3Time_FreTS_FusionExp", "data_path": "ETTh1", "pred_len": 720, "test_mse": 0.51897, "test_mae": 0.489438, "model": "T3Time_FreTS_Gated_Qwen_FusionExp", "timestamp": "2026-01-03 17:41:39", "seed": 2024, "seq_len": 96, "channel": 128, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 2, "d_layer": 2, "fusion_mode": "gate", "loss_fn": "smooth_l1", "frets_scale": 0.018, "sparsity_threshold": 0.009, "lradj": "type1", "patience": 10, "gpu": 0, "embed_version": "qwen3_0.6b"}
-{"model_id": "T3Time_FreTS_FusionExp_gate", "data_path": "ETTh1", "pred_len": 720, "test_mse": 0.49472084641456604, "test_mae": 0.4767938554286957, "model": "T3Time_FreTS_Gated_Qwen_FusionExp", "timestamp": "2026-01-03 19:12:25", "seed": 2024, "seq_len": 96, "channel": 64, "batch_size": 16, "learning_rate": 5e-05, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 2, "d_layer": 2, "head": 8, "embed_version": "qwen3_0.6b", "fusion_mode": "gate", "sparsity_threshold": 0.009, "frets_scale": 0.018}
-{"model_id": "T3Time_FreTS_FusionExp", "data_path": "ETTh1", "pred_len": 720, "test_mse": 0.494721, "test_mae": 0.476794, "model": "T3Time_FreTS_Gated_Qwen_FusionExp", "timestamp": "2026-01-03 19:12:26", "seed": 2024, "seq_len": 96, "channel": 64, "batch_size": 16, "learning_rate": 5e-05, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 2, "d_layer": 2, "fusion_mode": "gate", "loss_fn": "smooth_l1", "frets_scale": 0.018, "sparsity_threshold": 0.009, "lradj": "type1", "patience": 10, "gpu": 0, "embed_version": "qwen3_0.6b"}
-{"model_id": "T3Time_FreTS_Gated_Qwen", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.3778453469276428, "test_mae": 0.3953015208244324, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-04 01:07:00", "seed": 2024, "seq_len": 96, "channel": 64, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 16, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true}
-{"model_id": "T3Time_FreTS_Gated_Qwen", "data_path": "ETTh1", "pred_len": 192, "test_mse": 0.4258691966533661, "test_mae": 0.42239803075790405, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-04 03:06:42", "seed": 2024, "seq_len": 96, "channel": 64, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 16, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true}
-{"model_id": "T3Time_FreTS_Gated_Qwen", "data_path": "ETTh1", "pred_len": 336, "test_mse": 0.47783029079437256, "test_mae": 0.4481975734233856, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-04 05:01:15", "seed": 2024, "seq_len": 96, "channel": 64, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 16, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true}
-{"model_id": "T3Time_FreTS_Gated_Qwen", "data_path": "ETTh1", "pred_len": 720, "test_mse": 0.5209462642669678, "test_mae": 0.48986589908599854, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-04 06:40:54", "seed": 2024, "seq_len": 96, "channel": 64, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 16, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true}
-{"model_id": "T3Time_FreTS_Gated_Qwen", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.37894245982170105, "test_mae": 0.3891579806804657, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-04 08:13:08", "seed": 2024, "seq_len": 96, "channel": 64, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.5, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 4, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true}
-
-```
-</details>
-</tool-use>
-
----
-
-<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
-<details><summary>Tool use: **run_terminal_cmd** • Run command: grep -i "0.059869\|0.185416" /root/0/T3Time/experiment_results.log | head -5</summary>
-
-```bash
-grep -i "0.059869\|0.185416" /root/0/T3Time/experiment_results.log | head -5
-```
-</details>
-</tool-use>
-
----
-
-<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
-<details><summary>Tool use: **run_terminal_cmd** • Run command: grep -i "T3Time_FreTS_Gated_Qwen" /root/0/T3Time/experiment_results.log | grep -i "ETTh1" | grep -i "pred_len.*96" | grep -i "seed.*2024" | tail -5</summary>
-
-```bash
-grep -i "T3Time_FreTS_Gated_Qwen" /root/0/T3Time/experiment_results.log | grep -i "ETTh1" | grep -i "pred_len.*96" | grep -i "seed.*2024" | tail -5
-```
-
-```
-{"model_id": "T3Time_FreTS_Gated_Qwen", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.3778453469276428, "test_mae": 0.3953015208244324, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-04 01:07:00", "seed": 2024, "seq_len": 96, "channel": 64, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 16, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true}
-{"model_id": "T3Time_FreTS_Gated_Qwen", "data_path": "ETTh1", "pred_len": 192, "test_mse": 0.4258691966533661, "test_mae": 0.42239803075790405, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-04 03:06:42", "seed": 2024, "seq_len": 96, "channel": 64, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 16, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true}
-{"model_id": "T3Time_FreTS_Gated_Qwen", "data_path": "ETTh1", "pred_len": 336, "test_mse": 0.47783029079437256, "test_mae": 0.4481975734233856, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-04 05:01:15", "seed": 2024, "seq_len": 96, "channel": 64, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 16, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true}
-{"model_id": "T3Time_FreTS_Gated_Qwen", "data_path": "ETTh1", "pred_len": 720, "test_mse": 0.5209462642669678, "test_mae": 0.48986589908599854, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-04 06:40:54", "seed": 2024, "seq_len": 96, "channel": 64, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 16, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true}
-{"model_id": "T3Time_FreTS_Gated_Qwen", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.37894245982170105, "test_mae": 0.3891579806804657, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-04 08:13:08", "seed": 2024, "seq_len": 96, "channel": 64, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.5, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 4, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true}
-
-```
-</details>
-</tool-use>
-
----
-
-<tool-use data-tool-type="search" data-tool-name="codebase_search">
-<details>
-                <summary>Tool use: **codebase_search** • Searched codebase "Where does T3Time_FreTS_Gated_Qwen save experiment results to experiment_results.log?" • **15** results</summary>
-            
-| File | Lines |
-|------|-------|
-| `train_frets_gated_qwen.py` | L39-213 |
-| `train_frets_gated_qwen_fusion_exp.py` | L39-214 |
-| `train_frets_gated_qwen_longseq.py` | L39-228 |
-| `train_frets_gated_qwen_longseq_v2.py` | L39-222 |
-| `utils/experiment_logger.py` | L86 |
-| `train_learnable_wavelet_packet_gated_qwen.py` | L14-197 |
-| `scripts/T3Time_FreTS_FusionExp/train_best_configs_multi_seeds.sh` | L106-163 |
-| `scripts/ablation_frets_fredf.sh` | L54 |
-| `scripts/T3Time_FreTS_Gated_Qwen/ETTh1_fredf.sh` | L63 |
-| `scripts/T3Time_FreTS_FusionExp/compare_t3time_models.py` | L170 |
-| `scripts/T3Time_FreTS_FusionExp/analyze_longseq_results.py` | L55 |
-| `scripts/T3Time_FreTS_Gated_Qwen/ETTh1.sh` | L68 |
-| `scripts/T3Time_FreTS_FusionExp/ETTh1_hyperopt.sh` | L56-116 |
-| `train_wavelet_gated_qwen.py` | L104-159 |
-| `utils/experiment_logger.py` | L6-86 |
-
-</details>
-</tool-use>
-
----
-
-
-
----
-
-
-检查该结果的可能来源：MSE 0.059869 明显小于日志中的值（约 0.37）。搜索相关日志和可能的来源：
-
-
----
-
-<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
-<details><summary>Tool use: **run_terminal_cmd** • Run command: grep -r "0.059869\|0.185416" /root/0/T3Time/Results/ 2>/dev/null | head -5</summary>
-
-```bash
-grep -r "0.059869\|0.185416" /root/0/T3Time/Results/ 2>/dev/null | head -5
-```
-</details>
-</tool-use>
-
----
-
-<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
-<details><summary>Tool use: **run_terminal_cmd** • Run command: grep -i "T3Time_FreTS_Gated_Qwen" /root/0/T3Time/experiment_results.log | grep -i "pred_len.*96" | grep -i "seed.*2024" | python3 -c "
-import sys
-import json
-for line in sys.stdin:
-    try:
-        data = json.loads(line.strip())
-        mse = data.get('test_mse', 0)
-        mae = data.get('test_mae', 0)
-        if mse < 0.1:  # 查找MSE小于0.1的结果
-            print(f'MSE: {mse:.6f}, MAE: {mae:.6f}')
-            print(json.dumps(data, indent=2))
-    except:
-        pass
-"</summary>
-
-```bash
-grep -i "T3Time_FreTS_Gated_Qwen" /root/0/T3Time/experiment_results.log | grep -i "pred_len.*96" | grep -i "seed.*2024" | python3 -c "
-import sys
-import json
-for line in sys.stdin:
-    try:
-        data = json.loads(line.strip())
-        mse = data.get('test_mse', 0)
-        mae = data.get('test_mae', 0)
-        if mse < 0.1:  # 查找MSE小于0.1的结果
-            print(f'MSE: {mse:.6f}, MAE: {mae:.6f}')
-            print(json.dumps(data, indent=2))
-    except:
-        pass
-"
-```
-
-```
-MSE: 0.059869, MAE: 0.185416
-{
-  "data_path": "ETTh1",
-  "pred_len": 96,
-  "test_mse": 0.05986891686916351,
-  "test_mae": 0.18541570007801056,
-  "model": "T3Time_FreTS_Gated_Qwen",
-  "seq_len": 96,
-  "channel": 64,
-  "batch_size": 16,
-  "learning_rate": 0.0001,
-  "seed": 2024,
-  "dropout_n": 0.1,
-  "timestamp": "2025-12-29 15:52:11"
-}
-
-```
-</details>
-</tool-use>
-
----
-
-<tool-use data-tool-type="search" data-tool-name="grep">
-<details>
-<summary>Tool use: **grep** • Grep for "0\.059869|0\.185416" in "/root/0/T3Time" • 0 matches</summary>
-
-Output mode: content
-
-
-_No matches found_
-
-</details>
-</tool-use>
-
----
-
-
-
----
-
-
-已找到该结果。检查其在日志中的位置和格式：
-
-
----
-
-<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
-<details><summary>Tool use: **run_terminal_cmd** • Run command: grep -n "0.05986891686916351" /root/0/T3Time/experiment_results.log</summary>
-
-```bash
-grep -n "0.05986891686916351" /root/0/T3Time/experiment_results.log
-```
-
-```
-1845:{"data_path": "ETTh1", "pred_len": 96, "test_mse": 0.05986891686916351, "test_mae": 0.18541570007801056, "model": "T3Time_FreTS_Gated_Qwen", "seq_len": 96, "channel": 64, "batch_size": 16, "learning_rate": 0.0001, "seed": 2024, "dropout_n": 0.1, "timestamp": "2025-12-29 15:52:11"}
-
-```
-</details>
-</tool-use>
-
----
-
-<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
-<details><summary>Tool use: **run_terminal_cmd** • Run command: sed -n '$(grep -n "0.05986891686916351" /root/0/T3Time/experiment_results.log | cut -d: -f1)p' /root/0/T3Time/experiment_results.log | python3 -m json.tool</summary>
-
-```bash
-sed -n '$(grep -n "0.05986891686916351" /root/0/T3Time/experiment_results.log | cut -d: -f1)p' /root/0/T3Time/experiment_results.log | python3 -m json.tool
-```
-
-```
-sed: -e expression #1, char 2: unknown command: &#96;('
-Expecting value: line 1 column 1 (char 0)
-
-```
-</details>
-</tool-use>
-
----
-
-<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
-<details><summary>Tool use: **run_terminal_cmd** • Run command: grep -n "T3Time_FreTS_Gated_Qwen" /root/0/T3Time/experiment_results.log | grep "pred_len.*96" | grep "seed.*2024" | wc -l</summary>
-
-```bash
-grep -n "T3Time_FreTS_Gated_Qwen" /root/0/T3Time/experiment_results.log | grep "pred_len.*96" | grep "seed.*2024" | wc -l
-```
-
-```
-203
-
-```
-</details>
-</tool-use>
-
----
-
-
-
----
-
-
-查看该结果的完整内容：
-
-
----
-
-<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
-<details><summary>Tool use: **run_terminal_cmd** • Run command: sed -n '1845p' /root/0/T3Time/experiment_results.log | python3 -m json.tool</summary>
-
-```bash
-sed -n '1845p' /root/0/T3Time/experiment_results.log | python3 -m json.tool
-```
-
-```
-{
-    "data_path": "ETTh1",
-    "pred_len": 96,
-    "test_mse": 0.05986891686916351,
-    "test_mae": 0.18541570007801056,
-    "model": "T3Time_FreTS_Gated_Qwen",
-    "seq_len": 96,
-    "channel": 64,
-    "batch_size": 16,
-    "learning_rate": 0.0001,
-    "seed": 2024,
-    "dropout_n": 0.1,
-    "timestamp": "2025-12-29 15:52:11"
-}
-
-```
-</details>
-</tool-use>
-
----
-
-<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
-<details><summary>Tool use: **run_terminal_cmd** • Run command: python3 -c "
-import json
-with open('/root/0/T3Time/experiment_results.log', 'r') as f:
-    lines = f.readlines()
-    for i, line in enumerate(lines[1840:1850], 1841):
-        if '0.05986891686916351' in line:
-            try:
-                data = json.loads(line.strip())
-                print(f'Line {i}:')
-                print(json.dumps(data, indent=2, ensure_ascii=False))
-            except:
-                print(f'Line {i}: {line[:100]}')
-"</summary>
-
-```bash
-python3 -c "
-import json
-with open('/root/0/T3Time/experiment_results.log', 'r') as f:
-    lines = f.readlines()
-    for i, line in enumerate(lines[1840:1850], 1841):
-        if '0.05986891686916351' in line:
-            try:
-                data = json.loads(line.strip())
-                print(f'Line {i}:')
-                print(json.dumps(data, indent=2, ensure_ascii=False))
-            except:
-                print(f'Line {i}: {line[:100]}')
-"
-```
-
-```
-Line 1845:
-{
-  "data_path": "ETTh1",
-  "pred_len": 96,
-  "test_mse": 0.05986891686916351,
-  "test_mae": 0.18541570007801056,
-  "model": "T3Time_FreTS_Gated_Qwen",
-  "seq_len": 96,
-  "channel": 64,
-  "batch_size": 16,
-  "learning_rate": 0.0001,
-  "seed": 2024,
-  "dropout_n": 0.1,
-  "timestamp": "2025-12-29 15:52:11"
-}
-
-```
-</details>
-</tool-use>
-
----
-
-
-
----
-
-
-结果已在日志中（第1845行）。可能搜不到的原因：
-1. 时间较早：`"timestamp": "2025-12-29 15:52:11"`
-2. 字段不完整：缺少 `model_id`、`embed_version`、`weight_decay` 等字段
-3. 格式差异：与后续结果的格式不同
-
-检查该结果是否被分析脚本过滤：
-
-
----
-
-<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
-<details><summary>Tool use: **run_terminal_cmd** • Run command: python3 -c "
-import json
-import sys
-
-# 读取第1845行的结果
-with open('/root/0/T3Time/experiment_results.log', 'r') as f:
-    lines = f.readlines()
-    target_line = lines[1844]  # 0-indexed
-    
-data = json.loads(target_line.strip())
-print('这个结果包含的字段:')
-for key in sorted(data.keys()):
-    print(f'  {key}: {data[key]}')
-
-print('\n缺少的常见字段:')
-common_fields = ['model_id', 'embed_version', 'weight_decay', 'e_layer', 'd_layer', 'head']
-for field in common_fields:
-    if field not in data:
-        print(f'  - {field}')
-"</summary>
-
-```bash
-python3 -c "
-import json
-import sys
-
-# 读取第1845行的结果
-with open('/root/0/T3Time/experiment_results.log', 'r') as f:
-    lines = f.readlines()
-    target_line = lines[1844]  # 0-indexed
-    
-data = json.loads(target_line.strip())
-print('这个结果包含的字段:')
-for key in sorted(data.keys()):
-    print(f'  {key}: {data[key]}')
-
-print('\n缺少的常见字段:')
-common_fields = ['model_id', 'embed_version', 'weight_decay', 'e_layer', 'd_layer', 'head']
-for field in common_fields:
-    if field not in data:
-        print(f'  - {field}')
-"
-```
-
-```
-这个结果包含的字段:
-  batch_size: 16
-  channel: 64
-  data_path: ETTh1
-  dropout_n: 0.1
-  learning_rate: 0.0001
-  model: T3Time_FreTS_Gated_Qwen
-  pred_len: 96
-  seed: 2024
-  seq_len: 96
-  test_mae: 0.18541570007801056
-  test_mse: 0.05986891686916351
-  timestamp: 2025-12-29 15:52:11
-
-缺少的常见字段:
-  - model_id
-  - embed_version
-  - weight_decay
-  - e_layer
-  - d_layer
-  - head
-
-```
-</details>
-</tool-use>
-
----
-
-<tool-use data-tool-type="read" data-tool-name="read_file">
-<details><summary>Tool use: **read_file** • Read file: /root/0/T3Time/筛选分析实验结果.py</summary>
-
-</details>
-</tool-use>
-
----
-
-
-
----
-
-
-该结果在日志中（第1845行），但字段不完整。编写脚本验证该结果是否可被搜索到：
-
-
----
-
-<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
-<details><summary>Tool use: **run_terminal_cmd** • Run command: python3 -c "
-import json
-
-# 搜索条件
-target_mse = 0.059869
-target_mae = 0.185416
-target_model = 'T3Time_FreTS_Gated_Qwen'
-target_data = 'ETTh1'
-target_pred_len = 96
-target_seed = 2024
-
-print('='*60)
-print('搜索条件:')
-print(f'  Model: {target_model}')
-print(f'  Data: {target_data}')
-print(f'  Pred_len: {target_pred_len}')
-print(f'  Seed: {target_seed}')
-print(f'  MSE: {target_mse}')
-print(f'  MAE: {target_mae}')
-print('='*60)
-
-found = False
-with open('/root/0/T3Time/experiment_results.log', 'r') as f:
-    for i, line in enumerate(f, 1):
-        try:
-            data = json.loads(line.strip())
-            if (data.get('model') == target_model and
-                data.get('data_path') == target_data and
-                data.get('pred_len') == target_pred_len and
-                data.get('seed') == target_seed):
-                mse = data.get('test_mse', 0)
-                mae = data.get('test_mae', 0)
-                if abs(mse - target_mse) < 0.0001 or abs(mae - target_mae) < 0.0001:
-                    found = True
-                    print(f'\n✅ 找到结果 (第 {i} 行):')
-                    print(f'  MSE: {mse:.6f}')
-                    print(f'  MAE: {mae:.6f}')
-                    print(f'  时间戳: {data.get(\"timestamp\", \"N/A\")}')
-                    print(f'  包含字段: {len(data)} 个')
-                    print(f'  缺少字段: model_id={data.get(\"model_id\", \"缺失\")}, embed_version={data.get(\"embed_version\", \"缺失\")}')
-        except:
-            pass
-
-if not found:
-    print('\n❌ 未找到匹配的结果')
-"</summary>
-
-```bash
-python3 -c "
-import json
-
-# 搜索条件
-target_mse = 0.059869
-target_mae = 0.185416
-target_model = 'T3Time_FreTS_Gated_Qwen'
-target_data = 'ETTh1'
-target_pred_len = 96
-target_seed = 2024
-
-print('='*60)
-print('搜索条件:')
-print(f'  Model: {target_model}')
-print(f'  Data: {target_data}')
-print(f'  Pred_len: {target_pred_len}')
-print(f'  Seed: {target_seed}')
-print(f'  MSE: {target_mse}')
-print(f'  MAE: {target_mae}')
-print('='*60)
-
-found = False
-with open('/root/0/T3Time/experiment_results.log', 'r') as f:
-    for i, line in enumerate(f, 1):
-        try:
-            data = json.loads(line.strip())
-            if (data.get('model') == target_model and
-                data.get('data_path') == target_data and
-                data.get('pred_len') == target_pred_len and
-                data.get('seed') == target_seed):
-                mse = data.get('test_mse', 0)
-                mae = data.get('test_mae', 0)
-                if abs(mse - target_mse) < 0.0001 or abs(mae - target_mae) < 0.0001:
-                    found = True
-                    print(f'\n✅ 找到结果 (第 {i} 行):')
-                    print(f'  MSE: {mse:.6f}')
-                    print(f'  MAE: {mae:.6f}')
-                    print(f'  时间戳: {data.get(\"timestamp\", \"N/A\")}')
-                    print(f'  包含字段: {len(data)} 个')
-                    print(f'  缺少字段: model_id={data.get(\"model_id\", \"缺失\")}, embed_version={data.get(\"embed_version\", \"缺失\")}')
-        except:
-            pass
-
-if not found:
-    print('\n❌ 未找到匹配的结果')
-"
-```
-
-```
-============================================================
-搜索条件:
-  Model: T3Time_FreTS_Gated_Qwen
-  Data: ETTh1
-  Pred_len: 96
-  Seed: 2024
-  MSE: 0.059869
-  MAE: 0.185416
-============================================================
-
-✅ 找到结果 (第 1845 行):
-  MSE: 0.059869
-  MAE: 0.185416
-  时间戳: 2025-12-29 15:52:11
-  包含字段: 12 个
-  缺少字段: model_id=缺失, embed_version=缺失
-
-```
-</details>
-</tool-use>
-
----
-
-
-
----
-
-
-结果在日志中（第1845行）。可能搜不到的原因：
-1. 缺少字段：没有 `model_id`、`embed_version` 等，某些脚本可能依赖这些字段
-2. 时间较早：`"timestamp": "2025-12-29 15:52:11"`，可能被时间过滤排除
-3. 格式差异：字段较少，与后续结果格式不一致
-
-验证该结果是否会被常见搜索方式找到：
-
-
----
-
-<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
-<details><summary>Tool use: **run_terminal_cmd** • Run command: python3 << 'EOF'
-import json
-
-# 模拟常见的搜索方式
-target_model = 'T3Time_FreTS_Gated_Qwen'
-target_data = 'ETTh1'
-target_pred_len = 96
-target_seed = 2024
-
-print("="*60)
-print("测试不同的搜索方式")
-print("="*60)
-
-# 方式1: 只搜索 model 字段
-print("\n方式1: 搜索 model='T3Time_FreTS_Gated_Qwen'")
-count1 = 0
-with open('/root/0/T3Time/experiment_results.log', 'r') as f:
-    for line in f:
-        try:
-            data = json.loads(line.strip())
-            if data.get('model') == target_model:
-                count1 += 1
-        except:
-            pass
-print(f"  找到 {count1} 条结果")
-
-# 方式2: 搜索 model + data_path + pred_len + seed
-print("\n方式2: 搜索 model + data_path + pred_len + seed")
-count2 = 0
-with open('/root/0/T3Time/experiment_results.log', 'r') as f:
-    for line in f:
-        try:
-            data = json.loads(line.strip())
-            if (data.get('model') == target_model and
-                data.get('data_path') == target_data and
-                data.get('pred_len') == target_pred_len and
-                data.get('seed') == target_seed):
-                count2 += 1
-        except:
-            pass
-print(f"  找到 {count2} 条结果")
-
-# 方式3: 搜索 model_id（这个结果没有 model_id）
-print("\n方式3: 搜索 model_id 包含 'T3Time_FreTS_Gated_Qwen'")
-count3 = 0
-with open('/root/0/T3Time/experiment_results.log', 'r') as f:
-    for line in f:
-        try:
-            data = json.loads(line.strip())
-            model_id = data.get('model_id', '')
-            if 'T3Time_FreTS_Gated_Qwen' in model_id:
-                count3 += 1
-        except:
-            pass
-print(f"  找到 {count3} 条结果 (⚠️ 这个结果没有 model_id，所以不会被找到)")
-
-# 方式4: 搜索 embed_version（这个结果没有 embed_version）
-print("\n方式4: 搜索 embed_version='qwen3_0.6b'")
-count4 = 0
-with open('/root/0/T3Time/experiment_results.log', 'r') as f:
-    for line in f:
-        try:
-            data = json.loads(line.strip())
-            if data.get('embed_version') == 'qwen3_0.6b':
-                count4 += 1
-        except:
-            pass
-print(f"  找到 {count4} 条结果 (⚠️ 这个结果没有 embed_version，所以不会被找到)")
-
-print("\n" + "="*60)
-print("结论:")
-print("  - 如果使用方式1或方式2，可以找到这个结果")
-print("  - 如果使用方式3或方式4，找不到这个结果（因为缺少相应字段）")
-print("="*60)
-EOF
-</summary>
-
-```bash
-python3 << 'EOF'
-import json
-
-# 模拟常见的搜索方式
-target_model = 'T3Time_FreTS_Gated_Qwen'
-target_data = 'ETTh1'
-target_pred_len = 96
-target_seed = 2024
-
-print("="*60)
-print("测试不同的搜索方式")
-print("="*60)
-
-# 方式1: 只搜索 model 字段
-print("\n方式1: 搜索 model='T3Time_FreTS_Gated_Qwen'")
-count1 = 0
-with open('/root/0/T3Time/experiment_results.log', 'r') as f:
-    for line in f:
-        try:
-            data = json.loads(line.strip())
-            if data.get('model') == target_model:
-                count1 += 1
-        except:
-            pass
-print(f"  找到 {count1} 条结果")
-
-# 方式2: 搜索 model + data_path + pred_len + seed
-print("\n方式2: 搜索 model + data_path + pred_len + seed")
-count2 = 0
-with open('/root/0/T3Time/experiment_results.log', 'r') as f:
-    for line in f:
-        try:
-            data = json.loads(line.strip())
-            if (data.get('model') == target_model and
-                data.get('data_path') == target_data and
-                data.get('pred_len') == target_pred_len and
-                data.get('seed') == target_seed):
-                count2 += 1
-        except:
-            pass
-print(f"  找到 {count2} 条结果")
-
-# 方式3: 搜索 model_id（这个结果没有 model_id）
-print("\n方式3: 搜索 model_id 包含 'T3Time_FreTS_Gated_Qwen'")
-count3 = 0
-with open('/root/0/T3Time/experiment_results.log', 'r') as f:
-    for line in f:
-        try:
-            data = json.loads(line.strip())
-            model_id = data.get('model_id', '')
-            if 'T3Time_FreTS_Gated_Qwen' in model_id:
-                count3 += 1
-        except:
-            pass
-print(f"  找到 {count3} 条结果 (⚠️ 这个结果没有 model_id，所以不会被找到)")
-
-# 方式4: 搜索 embed_version（这个结果没有 embed_version）
-print("\n方式4: 搜索 embed_version='qwen3_0.6b'")
-count4 = 0
-with open('/root/0/T3Time/experiment_results.log', 'r') as f:
-    for line in f:
-        try:
-            data = json.loads(line.strip())
-            if data.get('embed_version') == 'qwen3_0.6b':
-                count4 += 1
-        except:
-            pass
-print(f"  找到 {count4} 条结果 (⚠️ 这个结果没有 embed_version，所以不会被找到)")
-
-print("\n" + "="*60)
-print("结论:")
-print("  - 如果使用方式1或方式2，可以找到这个结果")
-print("  - 如果使用方式3或方式4，找不到这个结果（因为缺少相应字段）")
-print("="*60)
-EOF
-
-```
-
-```
-============================================================
-测试不同的搜索方式
-============================================================
-
-方式1: 搜索 model='T3Time_FreTS_Gated_Qwen'
-  找到 912 条结果
-
-方式2: 搜索 model + data_path + pred_len + seed
-  找到 17 条结果
-
-方式3: 搜索 model_id 包含 'T3Time_FreTS_Gated_Qwen'
-  找到 471 条结果 (⚠️ 这个结果没有 model_id，所以不会被找到)
-
-方式4: 搜索 embed_version='qwen3_0.6b'
-  找到 4685 条结果 (⚠️ 这个结果没有 embed_version，所以不会被找到)
-
-============================================================
-结论:
-  - 如果使用方式1或方式2，可以找到这个结果
-  - 如果使用方式3或方式4，找不到这个结果（因为缺少相应字段）
-============================================================
-
-```
-</details>
-</tool-use>
-
----
-
-
-
----
-
-
-## 结果位置
-
-该结果在 `experiment_results.log` 的第 **1845 行**。
-
-## 为什么可能搜不到
-
-1. 缺少 `model_id` 字段：如果搜索脚本依赖 `model_id`，会漏掉该结果
-2. 缺少 `embed_version` 字段：如果按 `embed_version` 过滤，也会漏掉
-3. 字段较少：只有 12 个字段，而后续结果通常有 20+ 个字段
-
-## 搜索建议
-
-使用以下条件可以找到该结果：
-- `model == "T3Time_FreTS_Gated_Qwen"`
-- `data_path == "ETTh1"`
-- `pred_len == 96`
-- `seed == 2024`
-
-如果搜索脚本使用了 `model_id` 或 `embed_version` 作为必需条件，会漏掉该结果。
-
-## 建议
-
-这个结果可能是用旧版训练脚本保存的（时间戳：2025-12-29）。如果需要统一格式，可以：
-1. 重新运行训练并保存结果
-2. 修改搜索脚本，使其不依赖 `model_id` 和 `embed_version` 字段
-
-需要我帮你修改搜索脚本，使其能找到这个结果吗？
-
----
-
-_**User (2026-01-04 01:01Z)**_
-
-我直接搜0.059869，搜不到，怎么回事呢
-
----
-
-_**Agent (model default, mode Agent)**_
-
-
-
----
-
-
-检查日志中该数值的精确格式：
-
-
----
-
-<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
-<details><summary>Tool use: **run_terminal_cmd** • Run command: grep "0.059869" /root/0/T3Time/experiment_results.log</summary>
-
-```bash
-grep "0.059869" /root/0/T3Time/experiment_results.log
-```
-</details>
-</tool-use>
-
----
-
-<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
-<details><summary>Tool use: **run_terminal_cmd** • Run command: grep -E "0\.05986[0-9]" /root/0/T3Time/experiment_results.log | head -3</summary>
-
-```bash
-grep -E "0\.05986[0-9]" /root/0/T3Time/experiment_results.log | head -3
-```
-
-```
-{"data_path": "ETTh1", "pred_len": 96, "test_mse": 0.05986891686916351, "test_mae": 0.18541570007801056, "model": "T3Time_FreTS_Gated_Qwen", "seq_len": 96, "channel": 64, "batch_size": 16, "learning_rate": 0.0001, "seed": 2024, "dropout_n": 0.1, "timestamp": "2025-12-29 15:52:11"}
-
-```
-</details>
-</tool-use>
-
----
-
-<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
-<details><summary>Tool use: **run_terminal_cmd** • Run command: sed -n '1845p' /root/0/T3Time/experiment_results.log</summary>
-
-```bash
-sed -n '1845p' /root/0/T3Time/experiment_results.log
-```
-
-```
-{"data_path": "ETTh1", "pred_len": 96, "test_mse": 0.05986891686916351, "test_mae": 0.18541570007801056, "model": "T3Time_FreTS_Gated_Qwen", "seq_len": 96, "channel": 64, "batch_size": 16, "learning_rate": 0.0001, "seed": 2024, "dropout_n": 0.1, "timestamp": "2025-12-29 15:52:11"}
-
-```
-</details>
-</tool-use>
-
----
-
-
-
----
-
-
-问题原因：文件中存储的是精确值 `0.05986891686916351`，而搜索的是 `0.059869`（四舍五入），grep 精确匹配，所以搜不到。
-
-验证并给出正确的搜索方法：
-
-
----
-
-<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
-<details><summary>Tool use: **run_terminal_cmd** • Run command: echo "文件中存储的精确值:"
-grep -o '"test_mse": [0-9.]*' /root/0/T3Time/experiment_results.log | grep "0.05986" | head -1
-
-echo -e "\n搜索 0.059869 (精确匹配，找不到):"
-grep "0.059869" /root/0/T3Time/experiment_results.log | wc -l
-
-echo -e "\n搜索 0.05986 (部分匹配，可以找到):"
-grep "0.05986" /root/0/T3Time/experiment_results.log | wc -l</summary>
-
-```bash
-echo "文件中存储的精确值:"
-grep -o '"test_mse": [0-9.]*' /root/0/T3Time/experiment_results.log | grep "0.05986" | head -1
-
-echo -e "\n搜索 0.059869 (精确匹配，找不到):"
-grep "0.059869" /root/0/T3Time/experiment_results.log | wc -l
-
-echo -e "\n搜索 0.05986 (部分匹配，可以找到):"
-grep "0.05986" /root/0/T3Time/experiment_results.log | wc -l
-```
-
-```
-文件中存储的精确值:
-"test_mse": 0.05986891686916351
-
-搜索 0.059869 (精确匹配，找不到):
-0
-
-搜索 0.05986 (部分匹配，可以找到):
-1
-
-```
-</details>
-</tool-use>
-
----
-
-<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
-<details><summary>Tool use: **run_terminal_cmd** • Run command: python3 << 'EOF'
-import json
-import re
-
-# 方法1: 使用正则表达式搜索近似值
-target = 0.059869
-tolerance = 0.0001
-
-print("="*60)
-print("搜索方法对比")
-print("="*60)
-
-# 方法1: grep 精确匹配（找不到）
-print("\n方法1: grep 精确匹配 '0.059869'")
-print("  结果: 找不到（因为文件中是 0.05986891686916351）")
-
-# 方法2: grep 部分匹配（可以找到）
-print("\n方法2: grep 部分匹配 '0.05986'")
-print("  结果: 可以找到")
-
-# 方法3: Python 数值匹配（最准确）
-print("\n方法3: Python 数值范围匹配")
-count = 0
-with open('/root/0/T3Time/experiment_results.log', 'r') as f:
-    for line in f:
-        try:
-            data = json.loads(line.strip())
-            mse = data.get('test_mse', 0)
-            if isinstance(mse, (int, float)):
-                if abs(mse - target) < tolerance:
-                    count += 1
-                    print(f"  ✅ 找到: MSE={mse}, 行内容前100字符: {line[:100]}")
-        except:
-            pass
-
-print(f"\n  找到 {count} 条匹配结果")
-
-# 方法4: 使用正则表达式搜索数值范围
-print("\n方法4: 使用正则表达式搜索 0.05986x")
-pattern = r'"test_mse":\s*0\.05986\d+'
-count2 = 0
-with open('/root/0/T3Time/experiment_results.log', 'r') as f:
-    for line in f:
-        if re.search(pattern, line):
-            count2 += 1
-            if count2 == 1:
-                print(f"  ✅ 找到: {line[:100]}")
-
-print(f"\n  找到 {count2} 条匹配结果")
-
-print("\n" + "="*60)
-print("推荐搜索方法:")
-print("  1. 使用 grep '0.05986' (部分匹配)")
-print("  2. 使用 Python 脚本进行数值范围搜索")
-print("  3. 使用正则表达式: grep -E '0\\.05986[0-9]'")
-print("="*60)
-EOF
-</summary>
-
-```bash
-python3 << 'EOF'
-import json
-import re
-
-# 方法1: 使用正则表达式搜索近似值
-target = 0.059869
-tolerance = 0.0001
-
-print("="*60)
-print("搜索方法对比")
-print("="*60)
-
-# 方法1: grep 精确匹配（找不到）
-print("\n方法1: grep 精确匹配 '0.059869'")
-print("  结果: 找不到（因为文件中是 0.05986891686916351）")
-
-# 方法2: grep 部分匹配（可以找到）
-print("\n方法2: grep 部分匹配 '0.05986'")
-print("  结果: 可以找到")
-
-# 方法3: Python 数值匹配（最准确）
-print("\n方法3: Python 数值范围匹配")
-count = 0
-with open('/root/0/T3Time/experiment_results.log', 'r') as f:
-    for line in f:
-        try:
-            data = json.loads(line.strip())
-            mse = data.get('test_mse', 0)
-            if isinstance(mse, (int, float)):
-                if abs(mse - target) < tolerance:
-                    count += 1
-                    print(f"  ✅ 找到: MSE={mse}, 行内容前100字符: {line[:100]}")
-        except:
-            pass
-
-print(f"\n  找到 {count} 条匹配结果")
-
-# 方法4: 使用正则表达式搜索数值范围
-print("\n方法4: 使用正则表达式搜索 0.05986x")
-pattern = r'"test_mse":\s*0\.05986\d+'
-count2 = 0
-with open('/root/0/T3Time/experiment_results.log', 'r') as f:
-    for line in f:
-        if re.search(pattern, line):
-            count2 += 1
-            if count2 == 1:
-                print(f"  ✅ 找到: {line[:100]}")
-
-print(f"\n  找到 {count2} 条匹配结果")
-
-print("\n" + "="*60)
-print("推荐搜索方法:")
-print("  1. 使用 grep '0.05986' (部分匹配)")
-print("  2. 使用 Python 脚本进行数值范围搜索")
-print("  3. 使用正则表达式: grep -E '0\\.05986[0-9]'")
-print("="*60)
-EOF
-
-```
-
-```
-============================================================
-搜索方法对比
-============================================================
-
-方法1: grep 精确匹配 '0.059869'
-  结果: 找不到（因为文件中是 0.05986891686916351）
-
-方法2: grep 部分匹配 '0.05986'
-  结果: 可以找到
-
-方法3: Python 数值范围匹配
-  ✅ 找到: MSE=0.05986891686916351, 行内容前100字符: {"data_path": "ETTh1", "pred_len": 96, "test_mse": 0.05986891686916351, "test_mae": 0.18541570007801
-
-  找到 1 条匹配结果
-
-方法4: 使用正则表达式搜索 0.05986x
-  ✅ 找到: {"data_path": "ETTh1", "pred_len": 96, "test_mse": 0.05986891686916351, "test_mae": 0.18541570007801
-
-  找到 1 条匹配结果
-
-============================================================
-推荐搜索方法:
-  1. 使用 grep '0.05986' (部分匹配)
-  2. 使用 Python 脚本进行数值范围搜索
-  3. 使用正则表达式: grep -E '0\.05986[0-9]'
-============================================================
-
-```
-</details>
-</tool-use>
-
----
-
-
-
----
-
-
-## 问题原因
-
-文件中存储的是精确值：`0.05986891686916351`  
-你搜索的是：`0.059869`（四舍五入）
-
-`grep` 是精确匹配，所以搜不到。
-
-## 正确的搜索方法
-
-### 方法1: 使用部分匹配（最简单）
-```bash
-grep "0.05986" /root/0/T3Time/experiment_results.log
-```
-
-### 方法2: 使用正则表达式
-```bash
-grep -E "0\.05986[0-9]" /root/0/T3Time/experiment_results.log
-```
-
-### 方法3: 使用 Python 进行数值范围搜索（最准确）
-```bash
-python3 -c "
-import json
-target = 0.059869
-tolerance = 0.0001
-with open('/root/0/T3Time/experiment_results.log', 'r') as f:
-    for line in f:
-        try:
-            data = json.loads(line.strip())
-            mse = data.get('test_mse', 0)
-            if abs(mse - target) < tolerance:
-                print(line.strip())
-        except:
-            pass
-"
-```
-
-### 方法4: 直接查看第1845行
-```bash
-sed -n '1845p' /root/0/T3Time/experiment_results.log
-```
-
-## 快速验证
-
-运行以下命令可以找到该结果：
-```bash
-grep "0.05986" /root/0/T3Time/experiment_results.log
-```
-
-**总结**：文件中存储的是完整精度浮点数，搜索时需要使用部分匹配或数值范围搜索，而不是精确匹配。
-
----
-
-_**User (2026-01-04 01:01Z)**_
-
 T3Time_FreTS_Gated_Qwen_Hyperopt
 
 对于这个模型，编写一个参数寻优脚本，在种子2088和预测长度720上进行参数寻优，并编写寻优脚本，分别找出mae和mse最好的参数组合
@@ -28316,6 +26674,1427 @@ git config --global user.email
 注意：  
 - `user.name` / `user.email` 只是本地 Git 的签名信息，不一定等于你真正登录 GitHub 时用的账号名，但通常是你自己设的标识。  
 - 真正推送用的账号是你 HTTPS/SSH 登录 GitHub 时的账号，这次报错已经告诉你是 `Shulamith24`。
+
+---
+
+_**User (2026-01-06 11:02Z)**_
+
+✓ 已自动激活 conda 环境: TimeCMA_Qwen3
+(TimeCMA_Qwen3) root@dsz:~/0/T3Time# 
+
+有没有办法导出这个conda环境，到其他机器上安装呢？尽可能完美复制环境，应该用什么方法呢？
+
+---
+
+_**Agent (model default, mode Agent)**_
+
+
+
+---
+
+
+
+---
+
+有的，而且有两种精度不同的“导出方式”，你可以根据需求选：
+
+---
+
+### 一、常用做法：`environment.yml`（推荐，方便、可跨平台）
+
+**在当前机器导出：**
+
+```bash
+# 在 TimeCMA_Qwen3 环境里执行
+conda env export -n TimeCMA_Qwen3 > environment.yml
+```
+
+> 如果你平时装包用的是 `conda install` / `mamba install` 为主，建议用：
+> 
+> ```bash
+> conda env export -n TimeCMA_Qwen3 --from-history > environment.yml
+> ```
+>  
+> 这样只导出你“显式安装”的包，避免把一堆平台相关的子依赖写死，跨机器更容易成功。
+
+**在另一台机器上恢复：**
+
+```bash
+# 如果环境名可以修改：
+conda env create -f environment.yml
+
+# 如果想强制用同名环境：
+conda env create -n TimeCMA_Qwen3 -f environment.yml
+```
+
+如果已经有同名环境，需要先删掉：
+
+```bash
+conda remove -n TimeCMA_Qwen3 --all
+```
+
+---
+
+### 二、最严格复制：spec 文件（版本 + 架构都锁死）
+
+这个方法更“完美”，但**依赖对方机器的 OS / 架构、CUDA 版本几乎一致**，否则容易报错。
+
+**在当前机器导出精确 spec：**
+
+```bash
+# 只含 conda 包（包括 build、channel 等信息）
+conda list -n TimeCMA_Qwen3 --explicit > conda-spec.txt
+```
+
+**在另一台机器上用 spec 创建环境：**
+
+```bash
+conda create -n TimeCMA_Clone --file conda-spec.txt
+```
+
+如果你还用 `pip install` 过一些包，建议再导出一次：
+
+```bash
+# 在激活的环境里
+pip freeze > requirements.txt
+```
+
+然后在新机器上：
+
+```bash
+conda activate TimeCMA_Clone
+pip install -r requirements.txt
+```
+
+---
+
+### 三、还有几点需要注意
+
+- **CUDA/显卡驱动不能靠 conda 完全复制**：  
+  目标机器的驱动版本、CUDA/cuDNN 要尽量接近当前机器（比如都用 CUDA 12.x / 11.x），否则有些深度学习库会重新编译或加载失败。
+- **Python 版本要保持一致**：  
+  建议在 `environment.yml` 里确认 `python=` 版本号（比如 3.10），新机器最好也按这个来。
+- **最好把 `environment.yml` 和 `requirements.txt` 一起传到仓库**：  
+  以后换机器、同学要复现、上服务器，都直接 `conda env create -f environment.yml` 一条命令搞定。
+
+如果你愿意，我可以帮你在当前项目里生成一个“标准的 `environment.yml` + requirements.txt”，并建议放到哪个位置、怎么在 README 里写上使用方法。
+
+---
+
+_**User (2026-01-06 11:02Z)**_
+
+================================================================================
+预测长度 720 - Top 10 最佳配置（按 MSE 排序）
+================================================================================
+Rank   Channel    Dropout    Head     MSE             MAE            
+--------------------------------------------------------------------------------
+1      64         0.5        8        0.462425        0.458175
+
+按照这个配置写一个多种子寻优的脚本，从2000种子寻优到2100种子
+
+---
+
+_**Agent (model default, mode Agent)**_
+
+
+
+---
+
+
+查看现有脚本结构，以便编写多种子寻优脚本：
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /root/0/T3Time/scripts/T3Time_FreTS_FusionExp/hyperopt_pred720_seed2088_parallel.sh</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "How to run train_frets_gated_qwen.py with seed parameter for hyperparameter tuning?" • **15** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `scripts/search_frets_gated_qwen_seeds.py` | L29 |
+| `scripts/run_frets_gated_qwen_etth1.sh` | L49 |
+| `train_frets_gated_qwen.py` | L19-210 |
+| `scripts/search_wavelet_gated_hyperparams.py` | L57 |
+| `scripts/T3Time_FreTS_Gated_Qwen/ETTh1_fredf.sh` | L94-136 |
+| `scripts/T3Time_FreTS_Gated_Qwen/ETTh1.sh` | L94-148 |
+| `scripts/T3Time_FreTS_FusionExp/train_best_configs_multi_seeds.sh` | L106-163 |
+| `scripts/T3Time_FreTS_FusionExp/train_best_params_multi_seed.sh` | L64-116 |
+| `scripts/T3Time_FreTS_FusionExp/train_best_config.sh` | L119-182 |
+| `train_frets_gated_qwen_fusion_exp.py` | L39-212 |
+| `scripts/T3Time_FreTS_FusionExp/hyperopt_seed2088.sh` | L57-106 |
+| `train_frets_gated_qwen_fredf.py` | L81-189 |
+| `train_frets_gated_qwen_fredf.py` | L43 |
+| `scripts/T3Time_FreTS_FusionExp/train_best_config_final.sh` | L71 |
+| `scripts/T3Time_FreTS_FusionExp/hyperopt_pred720_seed2088.sh` | L56-113 |
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+查看最佳配置的完整参数，然后编写多种子寻优脚本：
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /root/0/T3Time/scripts/T3Time_FreTS_FusionExp/find_best_params_seed2088.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "Channel.*64.*Dropout.*0\.5.*Head.*8" in "/root/0/T3Time/experiment_results.log" • 0 matches</summary>
+
+Output mode: content
+
+
+_No matches found_
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+搜索实验日志中 pred_len=720 的最佳配置，获取完整参数：
+
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for ""pred_len":\s*720" in "/root/0/T3Time/experiment_results.log" • 42 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.456101, "test_mae": 0.472422, "model": "T3Time", "timestamp": "2025-12-23 01:06:18", "seed": 2020, "embed_version": "original", "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5\}` | L881 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.4561, "test_mae": 0.4724, "model": "gpt2", "timestamp": "2025-12-23 01:06:19", "seed": 2020, "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5, "e_layer": 3, "d_layer": 4\}` | L882 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.457065, "test_mae": 0.472692, "model": "T3Time", "timestamp": "2025-12-23 01:11:20", "seed": 2021, "embed_version": "original", "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5\}` | L883 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.4571, "test_mae": 0.4727, "model": "gpt2", "timestamp": "2025-12-23 01:11:21", "seed": 2021, "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5, "e_layer": 3, "d_layer": 4\}` | L884 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.448304, "test_mae": 0.4678, "model": "T3Time", "timestamp": "2025-12-23 01:16:21", "seed": 2022, "embed_version": "original", "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5\}` | L885 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.4483, "test_mae": 0.4678, "model": "gpt2", "timestamp": "2025-12-23 01:16:21", "seed": 2022, "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5, "e_layer": 3, "d_layer": 4\}` | L886 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.451517, "test_mae": 0.467584, "model": "T3Time", "timestamp": "2025-12-23 01:21:24", "seed": 2023, "embed_version": "original", "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5\}` | L887 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.4515, "test_mae": 0.4676, "model": "gpt2", "timestamp": "2025-12-23 01:21:25", "seed": 2023, "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5, "e_layer": 3, "d_layer": 4\}` | L888 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.455604, "test_mae": 0.471845, "model": "T3Time", "timestamp": "2025-12-23 01:26:26", "seed": 2024, "embed_version": "original", "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5\}` | L889 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.4556, "test_mae": 0.4718, "model": "gpt2", "timestamp": "2025-12-23 01:26:26", "seed": 2024, "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5, "e_layer": 3, "d_layer": 4\}` | L890 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.455194, "test_mae": 0.471516, "model": "T3Time", "timestamp": "2025-12-23 01:31:30", "seed": 2025, "embed_version": "original", "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5\}` | L891 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.4552, "test_mae": 0.4715, "model": "gpt2", "timestamp": "2025-12-23 01:31:30", "seed": 2025, "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5, "e_layer": 3, "d_layer": 4\}` | L892 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.448202, "test_mae": 0.46407, "model": "T3Time", "timestamp": "2025-12-23 01:36:41", "seed": 2026, "embed_version": "original", "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5\}` | L893 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.4482, "test_mae": 0.4641, "model": "gpt2", "timestamp": "2025-12-23 01:36:41", "seed": 2026, "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5, "e_layer": 3, "d_layer": 4\}` | L894 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.44881, "test_mae": 0.467122, "model": "T3Time", "timestamp": "2025-12-23 01:41:44", "seed": 2027, "embed_version": "original", "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5\}` | L895 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.4488, "test_mae": 0.4671, "model": "gpt2", "timestamp": "2025-12-23 01:41:44", "seed": 2027, "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5, "e_layer": 3, "d_layer": 4\}` | L896 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.459015, "test_mae": 0.474336, "model": "T3Time", "timestamp": "2025-12-23 01:46:46", "seed": 2028, "embed_version": "original", "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5\}` | L897 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.459, "test_mae": 0.4743, "model": "gpt2", "timestamp": "2025-12-23 01:46:46", "seed": 2028, "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5, "e_layer": 3, "d_layer": 4\}` | L898 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.455515, "test_mae": 0.468706, "model": "T3Time", "timestamp": "2025-12-23 01:52:00", "seed": 2029, "embed_version": "original", "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5\}` | L899 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.4555, "test_mae": 0.4687, "model": "gpt2", "timestamp": "2025-12-23 01:52:01", "seed": 2029, "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5, "e_layer": 3, "d_layer": 4\}` | L900 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.449613, "test_mae": 0.467006, "model": "T3Time", "timestamp": "2025-12-23 01:57:03", "seed": 2030, "embed_version": "original", "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5\}` | L901 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.4496, "test_mae": 0.467, "model": "gpt2", "timestamp": "2025-12-23 01:57:04", "seed": 2030, "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5, "e_layer": 3, "d_layer": 4\}` | L902 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.470911, "test_mae": 0.476432, "model": "T3Time", "timestamp": "2025-12-23 02:02:04", "seed": 2031, "embed_version": "original", "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5\}` | L903 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.4709, "test_mae": 0.4764, "model": "gpt2", "timestamp": "2025-12-23 02:02:05", "seed": 2031, "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5, "e_layer": 3, "d_layer": 4\}` | L904 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.448114, "test_mae": 0.464417, "model": "T3Time", "timestamp": "2025-12-23 02:07:05", "seed": 2032, "embed_version": "original", "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5\}` | L905 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.4481, "test_mae": 0.4644, "model": "gpt2", "timestamp": "2025-12-23 02:07:06", "seed": 2032, "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5, "e_layer": 3, "d_layer": 4\}` | L906 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.509387, "test_mae": 0.503226, "model": "T3Time", "timestamp": "2025-12-23 02:12:06", "seed": 2033, "embed_version": "original", "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5\}` | L907 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.5094, "test_mae": 0.5032, "model": "gpt2", "timestamp": "2025-12-23 02:12:06", "seed": 2033, "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5, "e_layer": 3, "d_layer": 4\}` | L908 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.449354, "test_mae": 0.468185, "model": "T3Time", "timestamp": "2025-12-23 02:17:07", "seed": 2034, "embed_version": "original", "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5\}` | L909 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.4494, "test_mae": 0.4682, "model": "gpt2", "timestamp": "2025-12-23 02:17:07", "seed": 2034, "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5, "e_layer": 3, "d_layer": 4\}` | L910 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.445912, "test_mae": 0.467007, "model": "T3Time", "timestamp": "2025-12-23 02:22:09", "seed": 2035, "embed_version": "original", "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5\}` | L911 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.4459, "test_mae": 0.467, "model": "gpt2", "timestamp": "2025-12-23 02:22:09", "seed": 2035, "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5, "e_layer": 3, "d_layer": 4\}` | L912 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.446131, "test_mae": 0.464157, "model": "T3Time", "timestamp": "2025-12-23 02:27:14", "seed": 2036, "embed_version": "original", "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5\}` | L913 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.4461, "test_mae": 0.4642, "model": "gpt2", "timestamp": "2025-12-23 02:27:15", "seed": 2036, "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5, "e_layer": 3, "d_layer": 4\}` | L914 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.450817, "test_mae": 0.468238, "model": "T3Time", "timestamp": "2025-12-23 02:32:18", "seed": 2037, "embed_version": "original", "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5\}` | L915 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.4508, "test_mae": 0.4682, "model": "gpt2", "timestamp": "2025-12-23 02:32:18", "seed": 2037, "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5, "e_layer": 3, "d_layer": 4\}` | L916 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.459072, "test_mae": 0.47222, "model": "T3Time", "timestamp": "2025-12-23 02:37:19", "seed": 2038, "embed_version": "original", "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5\}` | L917 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.4591, "test_mae": 0.4722, "model": "gpt2", "timestamp": "2025-12-23 02:37:19", "seed": 2038, "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5, "e_layer": 3, "d_layer": 4\}` | L918 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.452004, "test_mae": 0.468519, "model": "T3Time", "timestamp": "2025-12-23 02:42:20", "seed": 2039, "embed_version": "original", "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5\}` | L919 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.452, "test_mae": 0.4685, "model": "gpt2", "timestamp": "2025-12-23 02:42:20", "seed": 2039, "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5, "e_layer": 3, "d_layer": 4\}` | L920 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.456743, "test_mae": 0.472123, "model": "T3Time", "timestamp": "2025-12-23 02:47:24", "seed": 2040, "embed_version": "original", "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5\}` | L921 |
+| `/root/0/T3Time/experiment_results.log` | `\{"data_path": "ETTh1", "pred_len": 720, "test_mse": 0.4567, "test_mae": 0.4721, "model": "gpt2", "timestamp": "2025-12-23 02:47:24", "seed": 2040, "seq_len": 96, "channel": 64, "batch_size": 32, "learning_rate": 0.0001, "dropout_n": 0.5, "e_layer": 3, "d_layer": 4\}` | L922 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+搜索 seed=2088 且 pred_len=720 的 T3Time_FreTS_Gated_Qwen_Hyperopt 结果：
+
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for ""seed":\s*2088.*"pred_len":\s*720|"pred_len":\s*720.*"seed":\s*2088" in "/root/0/T3Time/experiment_results.log" • 782 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_FusionExp_gate", "data_path": "ETTh1", "pred_len": 720, "test_mse": 0.5116384029388428, "test_mae": 0.4859338402748108, "model": "T3Time_FreTS_Gated_Qwen_FusionExp", "timestamp": "2026-01-03 17:32:59", "seed": 2088, "seq_len": 96, "channel": 64, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 2, "head": 8, "embed_version": "qwen3_0.6b", "fusion_mode": "gate", "sparsity_threshold": 0.009, "frets_scale": 0.018\}` | L5907 |
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_FusionExp", "data_path": "ETTh1", "pred_len": 720, "test_mse": 0.511638, "test_mae": 0.485934, "model": "T3Time_FreTS_Gated_Qwen_FusionExp", "timestamp": "2026-01-03 17:33:00", "seed": 2088, "seq_len": 96, "channel": 64, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 2, "fusion_mode": "gate", "loss_fn": "smooth_l1", "frets_scale": 0.018, "sparsity_threshold": 0.009, "lradj": "type1", "patience": 10, "gpu": 0, "embed_version": "qwen3_0.6b"\}` | L5908 |
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_FusionExp_gate", "data_path": "ETTh1", "pred_len": 720, "test_mse": 0.534399151802063, "test_mae": 0.49683651328086853, "model": "T3Time_FreTS_Gated_Qwen_FusionExp", "timestamp": "2026-01-03 19:02:15", "seed": 2088, "seq_len": 96, "channel": 128, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 2, "d_layer": 2, "head": 8, "embed_version": "qwen3_0.6b", "fusion_mode": "gate", "sparsity_threshold": 0.009, "frets_scale": 0.018\}` | L6049 |
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_FusionExp", "data_path": "ETTh1", "pred_len": 720, "test_mse": 0.534399, "test_mae": 0.496837, "model": "T3Time_FreTS_Gated_Qwen_FusionExp", "timestamp": "2026-01-03 19:02:16", "seed": 2088, "seq_len": 96, "channel": 128, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 2, "d_layer": 2, "fusion_mode": "gate", "loss_fn": "smooth_l1", "frets_scale": 0.018, "sparsity_threshold": 0.009, "lradj": "type1", "patience": 10, "gpu": 0, "embed_version": "qwen3_0.6b"\}` | L6050 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "T3Time_FreTS_Gated_Qwen_Hyperopt" in "/root/0/T3Time/experiment_results.log" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_Gated_Qwen_Hyperopt", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.38016167283058167, "test_mae": 0.3926835060119629, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-03 01:38:01", "seed": 2088, "seq_len": 96, "channel": 32, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 2, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true\}` | L4597 |
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_Gated_Qwen_Hyperopt", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.38104498386383057, "test_mae": 0.3924593925476074, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-03 01:40:04", "seed": 2088, "seq_len": 96, "channel": 32, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 4, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true\}` | L4600 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+基于最佳配置（Channel=64, Dropout=0.5, Head=8）和现有脚本结构，编写多种子寻优脚本。先查看脚本中的默认参数：
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /root/0/T3Time/scripts/T3Time_FreTS_FusionExp/hyperopt_pred720_seed2088_parallel.sh</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+编写多种子寻优脚本，固定最佳配置，仅变化种子：
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="write">
+
+<details><summary>Tool use: **write** • Edit file: /root/0/T3Time/scripts/T3Time_FreTS_FusionExp/hyperopt_seed2000_2100_pred720.sh</summary>
+
+**Chunk 1**
+Lines added: 184, lines removed: 1
+
+```diff
+@@ -1,1 +1,184 @@
+- 
++ #!/bin/bash
++ # T3Time_FreTS_Gated_Qwen 多种子寻优脚本 (Seed 2000-2100)
++ # 固定最佳配置：Channel=64, Dropout=0.5, Head=8, Pred_Len=720
++ # 支持多GPU并行运行
++ 
++ set -uo pipefail
++ 
++ # 清理可能的环境变量问题
++ unset __vsc_prompt_cmd_original 2&gt;/dev/null || true
++ 
++ # 激活 conda 环境
++ eval "$(conda shell.bash hook)" 2&gt;/dev/null || true
++ conda activate TimeCMA_Qwen3 2&gt;/dev/null || source activate TimeCMA_Qwen3 2&gt;/dev/null || true
++ 
++ # 设置环境变量
++ export PYTHONPATH="/root/0/T3Time:${PYTHONPATH-}"
++ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
++ 
++ # 参数解析
++ GPU_ID=${1:-0}  # 默认 GPU 0
++ START_IDX=${2:-0}  # 默认从第0个实验开始
++ END_IDX=${3:--1}  # 默认到最后一个实验（-1表示全部）
++ PARALLEL=${4:-4}  # 默认同时运行4个实验
++ 
++ export CUDA_VISIBLE_DEVICES=${GPU_ID}
++ 
++ LOG_DIR="/root/0/T3Time/Results/T3Time_FreTS_Gated_Qwen_Hyperopt/ETTh1"
++ RESULT_LOG="/root/0/T3Time/experiment_results.log"
++ mkdir -p "${LOG_DIR}"
++ 
++ # 固定参数（基于最佳配置）
++ DATA_PATH="ETTh1"
++ SEQ_LEN=96
++ PRED_LEN=720
++ CHANNEL=64
++ DROPOUT_N=0.5
++ HEAD=8
++ E_LAYER=1
++ D_LAYER=1
++ EPOCHS=150
++ PATIENCE=10
++ LRADJ="type1"
++ EMBED_VERSION="qwen3_0.6b"
++ MODEL_ID="T3Time_FreTS_Gated_Qwen_Hyperopt"
++ 
++ # 根据最佳配置设置的其他参数
++ LEARNING_RATE=1e-4
++ WEIGHT_DECAY=1e-4
++ LOSS_FN="mse"
++ BATCH_SIZE=16
++ 
++ # 种子范围：2000-2100（共101个种子）
++ SEEDS=()
++ for seed in $(seq 2000 2100); do
++     SEEDS+=(${seed})
++ done
++ 
++ total_exps=${#SEEDS[@]}
++ 
++ # 如果不带任何参数调用脚本，则默认自动使用两张 GPU 并行跑完所有实验
++ if [ "$#" -eq 0 ]; then
++     MID=$(((total_exps - 1) / 2))
++     echo "=========================================="
++     echo "检测到未指定参数，启用默认双卡自动并行模式"
++     echo "总实验数: ${total_exps}，GPU0 跑 [0, ${MID}]，GPU1 跑 [$((MID + 1)), $((total_exps - 1))]"
++     echo "每卡并行数: ${PARALLEL}"
++     echo "=========================================="
++     echo ""
++ 
++     # GPU0 跑前半段
++     CUDA_VISIBLE_DEVICES=0 bash "$0" 0 0 "${MID}" "${PARALLEL}" &amp;
++     PID0=$!
++ 
++     # GPU1 跑后半段
++     CUDA_VISIBLE_DEVICES=1 bash "$0" 1 "$((MID + 1))" "$((total_exps - 1))" "${PARALLEL}" &amp;
++     PID1=$!
++ 
++     # 等待两个子进程结束
++     wait "${PID0}" "${PID1}"
++     echo "✅ 双卡自动并行多种子搜索已完成"
++     exit 0
++ fi
++ 
++ if [ ${END_IDX} -eq -1 ]; then
++     END_IDX=$((total_exps - 1))
++ fi
++ 
++ actual_exps=$((END_IDX - START_IDX + 1))
++ 
++ echo "=========================================="
++ echo "T3Time_FreTS_Gated_Qwen 多种子寻优 (Seed 2000-2100)"
++ echo "GPU: ${GPU_ID}, 实验范围: [${START_IDX}, ${END_IDX}] / ${total_exps}"
++ echo "并行数: ${PARALLEL}"
++ echo "Pred_Len: ${PRED_LEN}"
++ echo ""
++ echo "固定配置:"
++ echo "  Channel: ${CHANNEL}"
++ echo "  Dropout: ${DROPOUT_N}"
++ echo "  Head: ${HEAD}"
++ echo "  Learning Rate: ${LEARNING_RATE}"
++ echo "  Weight Decay: ${WEIGHT_DECAY}"
++ echo "  Loss Function: ${LOSS_FN}"
++ echo "  Batch Size: ${BATCH_SIZE}"
++ echo "  E_Layer: ${E_LAYER}"
++ echo "  D_Layer: ${D_LAYER}"
++ echo "总种子数: ${total_exps}"
++ echo "当前GPU将运行: ${actual_exps} 个实验"
++ echo "=========================================="
++ echo ""
++ 
++ # 运行实验的函数
++ run_experiment() {
++     local exp_idx=$1
++     local seed=$2
++     local gpu_id=$3
++     
++     log_file="${LOG_DIR}/pred${PRED_LEN}_c${CHANNEL}_d${DROPOUT_N}_h${HEAD}_lr${LEARNING_RATE}_wd${WEIGHT_DECAY}_loss${LOSS_FN}_bs${BATCH_SIZE}_seed${seed}.log"
++     
++     echo "[实验 ${exp_idx}/${total_exps}] GPU${gpu_id} 开始..."
++     echo "  Seed: ${seed}"
++     
++     python /root/0/T3Time/train_frets_gated_qwen.py \
++         --data_path "${DATA_PATH}" \
++         --batch_size "${BATCH_SIZE}" \
++         --seq_len "${SEQ_LEN}" \
++         --pred_len "${PRED_LEN}" \
++         --epochs "${EPOCHS}" \
++         --es_patience "${PATIENCE}" \
++         --seed "${seed}" \
++         --channel "${CHANNEL}" \
++         --learning_rate "${LEARNING_RATE}" \
++         --dropout_n "${DROPOUT_N}" \
++         --weight_decay "${WEIGHT_DECAY}" \
++         --e_layer "${E_LAYER}" \
++         --d_layer "${D_LAYER}" \
++         --head "${HEAD}" \
++         --loss_fn "${LOSS_FN}" \
++         --lradj "${LRADJ}" \
++         --embed_version "${EMBED_VERSION}" \
++         --model_id "${MODEL_ID}" \
++         &gt; "${log_file}" 2&gt;&amp;1
++     
++     exit_code=$?
++     if [ $exit_code -eq 0 ]; then
++         echo "  ✅ GPU${gpu_id} 实验 ${exp_idx} (Seed ${seed}) 完成"
++     else
++         echo "  ⚠️  GPU${gpu_id} 实验 ${exp_idx} (Seed ${seed}) 失败 (退出码: ${exit_code})"
++     fi
++ }
++ 
++ # 并行运行实验
++ current_idx=${START_IDX}
++ running_jobs=0
++ 
++ while [ ${current_idx} -le ${END_IDX} ]; do
++     # 等待有空闲槽位
++     while [ ${running_jobs} -ge ${PARALLEL} ]; do
++         sleep 5
++         # 检查正在运行的作业数
++         running_jobs=$(jobs -r | wc -l)
++     done
++     
++     # 启动新实验
++     seed=${SEEDS[${current_idx}]}
++     run_experiment ${current_idx} "${seed}" ${GPU_ID} &amp;
++     
++     current_idx=$((current_idx + 1))
++     running_jobs=$(jobs -r | wc -l)
++     
++     echo "  当前运行中: ${running_jobs}/${PARALLEL} 个实验"
++ done
++ 
++ # 等待所有作业完成
++ echo ""
++ echo "等待所有实验完成..."
++ wait
++ 
++ echo "=========================================="
++ echo "✅ GPU${GPU_ID} 所有实验完成！"
++ echo "=========================================="
++ echo "结果已追加到: ${RESULT_LOG}"
++ echo "日志文件保存在: ${LOG_DIR}"
++ echo ""
++ 
+```
+
+</details>
+
+</tool-use>
+
+---
+
+
+
+---
+
+
+添加执行权限，并创建分析脚本：
+
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: chmod +x /root/0/T3Time/scripts/T3Time_FreTS_FusionExp/hyperopt_seed2000_2100_pred720.sh</summary>
+
+```bash
+chmod +x /root/0/T3Time/scripts/T3Time_FreTS_FusionExp/hyperopt_seed2000_2100_pred720.sh
+```
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /root/0/T3Time/scripts/T3Time_FreTS_FusionExp/find_best_params_seed2088.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+创建分析脚本：
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="write">
+
+<details><summary>Tool use: **write** • Edit file: /root/0/T3Time/scripts/T3Time_FreTS_FusionExp/analyze_seed2000_2100_pred720.py</summary>
+
+**Chunk 1**
+Lines added: 227, lines removed: 1
+
+```diff
+@@ -1,1 +1,227 @@
+- 
++ #!/usr/bin/env python3
++ # -*- coding: utf-8 -*-
++ """
++ 分析 seed 2000-2100 多种子寻优实验结果
++ 固定配置：Channel=64, Dropout=0.5, Head=8, Pred_Len=720
++ """
++ import json
++ import os
++ import sys
++ from collections import defaultdict
++ 
++ # 添加项目根目录到 Python 路径
++ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
++ if project_root not in sys.path:
++     sys.path.insert(0, project_root)
++ 
++ def load_seed_search_results(result_file=None, seed_start=2000, seed_end=2100, 
++                              pred_len=720, model_id_prefix="T3Time_FreTS_Gated_Qwen_Hyperopt"):
++     """加载多种子寻优实验结果"""
++     if result_file is None:
++         result_file = os.path.join(project_root, "experiment_results.log")
++     
++     results = []
++     
++     if not os.path.exists(result_file):
++         print(f"❌ 结果文件不存在: {result_file}")
++         return results
++     
++     with open(result_file, 'r', encoding='utf-8') as f:
++         for line_num, line in enumerate(f, 1):
++             if not line.strip():
++                 continue
++             try:
++                 data = json.loads(line.strip())
++                 # 检查是否符合条件
++                 seed = data.get('seed')
++                 pred = data.get('pred_len')
++                 model_id = data.get('model_id', '')
++                 
++                 if (seed_start &lt;= seed &lt;= seed_end and 
++                     pred == pred_len and
++                     model_id.startswith(model_id_prefix)):
++                     results.append(data)
++             except json.JSONDecodeError as e:
++                 continue
++             except Exception as e:
++                 continue
++     
++     return results
++ 
++ def analyze_seed_results(results):
++     """分析多种子寻优结果"""
++     if not results:
++         print("❌ 未找到符合条件的实验结果")
++         return
++     
++     print("="*80)
++     print(f"T3Time_FreTS_Gated_Qwen 多种子寻优结果分析 (Seed 2000-2100, Pred_Len=720)")
++     print("="*80)
++     print(f"\n找到 {len(results)} 条实验结果\n")
++     
++     # 按 MSE 排序
++     sorted_results_mse = sorted(results, key=lambda x: x.get('test_mse', float('inf')))
++     best_mse = sorted_results_mse[0] if sorted_results_mse else None
++     
++     # 按 MAE 排序
++     sorted_results_mae = sorted(results, key=lambda x: x.get('test_mae', float('inf')))
++     best_mae = sorted_results_mae[0] if sorted_results_mae else None
++     
++     # 统计信息
++     mse_values = [r.get('test_mse', 0) for r in results]
++     mae_values = [r.get('test_mae', 0) for r in results]
++     
++     mse_mean = sum(mse_values) / len(mse_values) if mse_values else 0
++     mse_min = min(mse_values) if mse_values else 0
++     mse_max = max(mse_values) if mse_values else 0
++     mse_std = (sum((x - mse_mean) ** 2 for x in mse_values) / len(mse_values)) ** 0.5 if mse_values else 0
++     
++     mae_mean = sum(mae_values) / len(mae_values) if mae_values else 0
++     mae_min = min(mae_values) if mae_values else 0
++     mae_max = max(mae_values) if mae_values else 0
++     mae_std = (sum((x - mae_mean) ** 2 for x in mae_values) / len(mae_values)) ** 0.5 if mae_values else 0
++     
++     # 显示最佳 MSE 结果
++     print("="*80)
++     print("🏆 最佳 MSE 结果")
++     print("="*80)
++     if best_mse:
++         print(f"Seed:           {best_mse.get('seed', 'N/A')}")
++         print(f"Test MSE:       {best_mse.get('test_mse', 'N/A'):.6f}")
++         print(f"Test MAE:       {best_mse.get('test_mae', 'N/A'):.6f}")
++         print(f"Channel:        {best_mse.get('channel', 'N/A')}")
++         print(f"Dropout:        {best_mse.get('dropout_n', 'N/A')}")
++         print(f"Head:           {best_mse.get('head', 'N/A')}")
++         print(f"Learning Rate:  {best_mse.get('learning_rate', 'N/A')}")
++         print(f"Weight Decay:   {best_mse.get('weight_decay', 'N/A')}")
++         print(f"Batch Size:     {best_mse.get('batch_size', 'N/A')}")
++         print(f"Loss Function:  {best_mse.get('loss_fn', 'N/A')}")
++         print(f"Timestamp:      {best_mse.get('timestamp', 'N/A')}")
++     
++     # 显示最佳 MAE 结果
++     print("\n" + "="*80)
++     print("🏆 最佳 MAE 结果")
++     print("="*80)
++     if best_mae:
++         print(f"Seed:           {best_mae.get('seed', 'N/A')}")
++         print(f"Test MSE:       {best_mae.get('test_mse', 'N/A'):.6f}")
++         print(f"Test MAE:       {best_mae.get('test_mae', 'N/A'):.6f}")
++         print(f"Channel:        {best_mae.get('channel', 'N/A')}")
++         print(f"Dropout:        {best_mae.get('dropout_n', 'N/A')}")
++         print(f"Head:           {best_mae.get('head', 'N/A')}")
++         print(f"Learning Rate:  {best_mae.get('learning_rate', 'N/A')}")
++         print(f"Weight Decay:   {best_mae.get('weight_decay', 'N/A')}")
++         print(f"Batch Size:     {best_mae.get('batch_size', 'N/A')}")
++         print(f"Loss Function:  {best_mae.get('loss_fn', 'N/A')}")
++         print(f"Timestamp:      {best_mae.get('timestamp', 'N/A')}")
++     
++     # 检查最佳 MSE 和 MAE 是否来自同一个种子
++     if best_mse and best_mae:
++         if best_mse.get('seed') == best_mae.get('seed'):
++             print("\n✅ 最佳 MSE 和最佳 MAE 来自同一个种子！")
++         else:
++             print(f"\n⚠️  最佳 MSE (Seed {best_mse.get('seed')}) 和最佳 MAE (Seed {best_mae.get('seed')}) 来自不同种子")
++     
++     # 统计信息
++     print("\n" + "="*80)
++     print("📊 统计信息")
++     print("="*80)
++     print(f"总实验数:        {len(results)}")
++     print(f"\nMSE 统计:")
++     print(f"  均值:          {mse_mean:.6f}")
++     print(f"  最小值:        {mse_min:.6f}")
++     print(f"  最大值:        {mse_max:.6f}")
++     print(f"  标准差:        {mse_std:.6f}")
++     print(f"\nMAE 统计:")
++     print(f"  均值:          {mae_mean:.6f}")
++     print(f"  最小值:        {mae_min:.6f}")
++     print(f"  最大值:        {mae_max:.6f}")
++     print(f"  标准差:        {mae_std:.6f}")
++     
++     # Top 10 最佳结果（按 MSE）
++     print("\n" + "="*80)
++     print("Top 10 最佳配置（按 MSE 排序）")
++     print("="*80)
++     print(f"{'Rank':&lt;6} {'Seed':&lt;8} {'MSE':&lt;15} {'MAE':&lt;15}")
++     print("-"*80)
++     
++     for i, r in enumerate(sorted_results_mse[:10], 1):
++         print(f"{i:&lt;6} {r.get('seed', 'N/A'):&lt;8} "
++               f"{r.get('test_mse', 'N/A'):&lt;15.6f} {r.get('test_mae', 'N/A'):&lt;15.6f}")
++     
++     # Top 10 最佳结果（按 MAE）
++     print("\n" + "="*80)
++     print("Top 10 最佳配置（按 MAE 排序）")
++     print("="*80)
++     print(f"{'Rank':&lt;6} {'Seed':&lt;8} {'MSE':&lt;15} {'MAE':&lt;15}")
++     print("-"*80)
++     
++     for i, r in enumerate(sorted_results_mae[:10], 1):
++         print(f"{i:&lt;6} {r.get('seed', 'N/A'):&lt;8} "
++               f"{r.get('test_mse', 'N/A'):&lt;15.6f} {r.get('test_mae', 'N/A'):&lt;15.6f}")
++     
++     # 种子分布分析（按 MSE 区间）
++     print("\n" + "="*80)
++     print("种子分布分析（按 MSE 区间）")
++     print("="*80)
++     
++     # 定义 MSE 区间
++     mse_ranges = [
++         (0, mse_mean - mse_std, "优秀 (&lt; 均值-1σ)"),
++         (mse_mean - mse_std, mse_mean, "良好 (均值-1σ ~ 均值)"),
++         (mse_mean, mse_mean + mse_std, "一般 (均值 ~ 均值+1σ)"),
++         (mse_mean + mse_std, float('inf'), "较差 (&gt; 均值+1σ)")
++     ]
++     
++     for min_val, max_val, label in mse_ranges:
++         count = sum(1 for mse in mse_values if min_val &lt;= mse &lt; max_val)
++         percentage = count / len(mse_values) * 100 if mse_values else 0
++         print(f"{label:&lt;25} {count:&gt;4} 个种子 ({percentage:&gt;5.1f}%)")
++     
++     # 显示最佳 MSE 的命令行格式
++     if best_mse:
++         print("\n" + "="*80)
++         print("📋 最佳 MSE 参数组合（命令行格式）")
++         print("="*80)
++         print("python train_frets_gated_qwen.py \\")
++         print(f"    --data_path {best_mse.get('data_path', 'ETTh1')} \\")
++         print(f"    --seq_len {best_mse.get('seq_len', 96)} \\")
++         print(f"    --pred_len {best_mse.get('pred_len', 720)} \\")
++         print(f"    --channel {best_mse.get('channel', 64)} \\")
++         print(f"    --head {best_mse.get('head', 8)} \\")
++         print(f"    --e_layer {best_mse.get('e_layer', 1)} \\")
++         print(f"    --d_layer {best_mse.get('d_layer', 1)} \\")
++         print(f"    --learning_rate {best_mse.get('learning_rate', '1e-4')} \\")
++         print(f"    --weight_decay {best_mse.get('weight_decay', '1e-4')} \\")
++         print(f"    --dropout_n {best_mse.get('dropout_n', 0.5)} \\")
++         print(f"    --batch_size {best_mse.get('batch_size', 16)} \\")
++         print(f"    --loss_fn {best_mse.get('loss_fn', 'mse')} \\")
++         print(f"    --lradj {best_mse.get('lradj', 'type1')} \\")
++         print(f"    --embed_version {best_mse.get('embed_version', 'qwen3_0.6b')} \\")
++         print(f"    --epochs {best_mse.get('epochs', 150)} \\")
++         print(f"    --es_patience {best_mse.get('patience', 10)} \\")
++         print(f"    --seed {best_mse.get('seed', 'N/A')}")
++ 
++ if __name__ == "__main__":
++     import argparse
++     
++     parser = argparse.ArgumentParser(description='分析多种子寻优实验结果')
++     parser.add_argument('--result_file', type=str, default=None, help='实验结果文件路径')
++     parser.add_argument('--seed_start', type=int, default=2000, help='种子起始值')
++     parser.add_argument('--seed_end', type=int, default=2100, help='种子结束值')
++     parser.add_argument('--pred_len', type=int, default=720, help='预测长度')
++     parser.add_argument('--model_id', type=str, default="T3Time_FreTS_Gated_Qwen_Hyperopt", 
++                        help='模型ID前缀')
++     
++     args = parser.parse_args()
++     
++     results = load_seed_search_results(
++         result_file=args.result_file,
++         seed_start=args.seed_start,
++         seed_end=args.seed_end,
++         pred_len=args.pred_len,
++         model_id_prefix=args.model_id
++     )
++     
++     analyze_seed_results(results)
++ 
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: chmod +x /root/0/T3Time/scripts/T3Time_FreTS_FusionExp/analyze_seed2000_2100_pred720.py</summary>
+
+```bash
+chmod +x /root/0/T3Time/scripts/T3Time_FreTS_FusionExp/analyze_seed2000_2100_pred720.py
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+已创建多种子寻优脚本和分析脚本。脚本说明：
+
+## 创建的脚本
+
+### 1. 寻优脚本：`hyperopt_seed2000_2100_pred720.sh`
+- 固定配置：Channel=64, Dropout=0.5, Head=8, Pred_Len=720
+- 种子范围：2000-2100（共101个种子）
+- 支持双GPU并行运行（默认每卡并行4个实验）
+- 其他参数使用常见默认值：
+  - Learning Rate: 1e-4
+  - Weight Decay: 1e-4
+  - Batch Size: 16
+  - Loss Function: mse
+  - E_Layer: 1, D_Layer: 1
+
+### 2. 分析脚本：`analyze_seed2000_2100_pred720.py`
+- 显示最佳 MSE 和最佳 MAE 的种子及详细参数
+- 统计信息（均值、最小值、最大值、标准差）
+- Top 10 最佳结果（按 MSE 和 MAE 分别排序）
+- 种子分布分析（按 MSE 区间）
+- 提供最佳配置的命令行格式
+
+## 使用方法
+
+**运行寻优脚本：**
+```bash
+# 默认双卡并行运行（推荐）
+bash scripts/T3Time_FreTS_FusionExp/hyperopt_seed2000_2100_pred720.sh
+
+# 或者指定GPU和范围
+bash scripts/T3Time_FreTS_FusionExp/hyperopt_seed2000_2100_pred720.sh 0 0 50 4
+```
+
+**分析结果：**
+```bash
+python scripts/T3Time_FreTS_FusionExp/analyze_seed2000_2100_pred720.py
+```
+
+注意：脚本中其他参数（learning_rate, weight_decay, batch_size, loss_fn）使用了常见默认值。如需修改，请告知，我可以更新脚本。
+
+需要我现在运行脚本，还是先调整参数？
+
+---
+
+_**User (2026-01-06 11:02Z)**_
+
+Embeddings/ETTh1/qwen3_0.6b
+
+这些嵌入是什么命令生成的？给出命令，我要去别的机器上运行
+
+---
+
+_**Agent (model default, mode Agent)**_
+
+
+
+---
+
+
+查找生成这些嵌入文件的命令：
+
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="codebase_search">
+<details>
+                <summary>Tool use: **codebase_search** • Searched codebase "How to generate qwen3_0.6b embeddings for ETTh1 dataset?" • **13** results</summary>
+            
+| File | Lines |
+|------|-------|
+| `storage/gen_prompt_emb_qwen3_06b.py` | L2-124 |
+| `scripts/generate_embeddings_ETTh1.sh` | L58 |
+| `storage/gen_prompt_emb_qwen3.py` | L2-123 |
+| `storage/store_emb_qwen3_0.6b.py` | L50-121 |
+| `storage/store_emb_qwen3_06b.py` | L50-121 |
+| `storage/gen_prompt_emb_qwen3_06b.py` | L124 |
+| `storage/store_emb_qwen3_06b.py` | L60 |
+| `storage/store_emb_qwen3_0.6b.py` | L60 |
+| `storage/store_emb_qwen3.py` | L50-119 |
+| `storage/store_emb_qwen3_06b.py` | L60-126 |
+| `storage/store_emb_qwen3_0.6b.py` | L60-126 |
+| `scripts/generate_all_embeddings.sh` | L38 |
+| `storage/store_emb_qwen3.py` | L60 |
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="glob_file_search">
+<details>
+<summary>Tool use: **glob_file_search** • Searched codebase "*embed*.py" • **2** results in **1** directory</summary>
+
+Directory: **\root\0\T3Time** (2 files)
+
+| File |
+|------|
+| `generate_embeddings_wavelet.py` |
+| `layers\Embed.py` |
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="glob_file_search">
+<details>
+<summary>Tool use: **glob_file_search** • Searched codebase "*gen*embed*.py" • **1** result in **1** directory</summary>
+
+Directory: **\root\0\T3Time** (1 file)
+
+| File |
+|------|
+| `generate_embeddings_wavelet.py` |
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for "qwen3_0\.6b|qwen3_0.6b" in "/root/0/T3Time" • 101 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/analyze_seed2000_2100_pred720.py` | `print(f"    --embed_version \{best_mse.get('embed_version', 'qwen3_0.6b')\} \\")` | L200 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/hyperopt_seed2000_2100_pred720.sh` | `EMBED_VERSION="qwen3_0.6b"` | L43 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/hyperopt_pred720_seed2088_parallel.sh` | `EMBED_VERSION="qwen3_0.6b"` | L40 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/find_best_params_seed2088.py` | `print(f"    --embed_version \{best_mse.get('embed_version', 'qwen3_0.6b')\} \\")` | L238 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/find_best_params_seed2088.py` | `print(f"    --embed_version \{best_mae.get('embed_version', 'qwen3_0.6b')\} \\")` | L260 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/hyperopt_layer_search.sh` | `EMBED_VERSION="qwen3_0.6b"` | L35 |
+| `/root/0/T3Time/scripts/T3Time_FreEformer/hyperopt_wide_parallel.sh` | `EMBED_VERSION="qwen3_0.6b"` | L42 |
+| `/root/0/T3Time/scripts/T3Time_FreEformer/hyperopt_wide_parallel.sh` | `EMBED_VERSION="qwen3_0.6b"` | L223 |
+| `/root/0/T3Time/scripts/T3Time_FreEformer/hyperopt_stage2.sh` | `EMBED_VERSION="qwen3_0.6b"` | L34 |
+| `/root/0/T3Time/scripts/T3Time_FreEformer/hyperopt_stage1.sh` | `EMBED_VERSION="qwen3_0.6b"` | L34 |
+| `/root/0/T3Time/train_freeformer_gated_qwen.py` | `parser.add_argument('--embed_version', type=str, default='qwen3_0.6b', help='嵌入版本')` | L58 |
+| `/root/0/T3Time/train_freeformer_simple.sh` | `--embed_version qwen3_0.6b \` | L20 |
+| `/root/0/T3Time/train_freeformer_recommended.sh` | `--embed_version qwen3_0.6b \` | L20 |
+| `/root/0/T3Time/FreEformer参数对应说明.md` | `\| `--embed_version` \| LLM 嵌入版本 \| qwen3_0.6b \|` | L54 |
+| `/root/0/T3Time/FreEformer参数对应说明.md` | `--embed_version qwen3_0.6b \` | L77 |
+| `/root/0/T3Time/FreEformer参数对应说明.md` | `--embed_version qwen3_0.6b \` | L110 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/train_best_params_multi_seed.sh` | `EMBED_VERSION="qwen3_0.6b"` | L32 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/hyperopt_pred720_seed2088_focused.sh` | `EMBED_VERSION="qwen3_0.6b"` | L34 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/hyperopt_pred720_seed2088_advanced.sh` | `EMBED_VERSION="qwen3_0.6b"` | L34 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/hyperopt_pred720_seed2088_extended.sh` | `EMBED_VERSION="qwen3_0.6b"` | L34 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/hyperopt_pred720_seed2088.sh` | `EMBED_VERSION="qwen3_0.6b"` | L37 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/train_t3time_original_multi_predlen.sh` | `EMBED_VERSION="qwen3_0.6b"` | L28 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/train_longseq_v2.sh` | `EMBED_VERSION="qwen3_0.6b"` | L30 |
+| `/root/0/T3Time/train_frets_gated_qwen_longseq_v2.py` | `parser.add_argument('--embed_version', type=str, default='qwen3_0.6b', help='嵌入版本')` | L58 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/train_longseq_v2_multi_predlen.sh` | `EMBED_VERSION="qwen3_0.6b"` | L36 |
+| `/root/0/T3Time/train_frets_gated_qwen_longseq.py` | `parser.add_argument('--embed_version', type=str, default='qwen3_0.6b', help='嵌入版本')` | L58 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/train_longseq_multi_predlen.sh` | `EMBED_VERSION="qwen3_0.6b"` | L35 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/train_best_configs_multi_seeds.sh` | `EMBED_VERSION="qwen3_0.6b"` | L35 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/hyperopt_seed2088.sh` | `EMBED_VERSION="qwen3_0.6b"` | L37 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/HYPEROPT_README.md` | `- `embed_version=qwen3_0.6b`` | L30 |
+| `/root/0/T3Time/train_frets_gated_qwen.py` | `parser.add_argument('--embed_version', type=str, default='qwen3_0.6b', help='嵌入版本')` | L58 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/train_single_example.sh` | `--embed_version qwen3_0.6b \` | L37 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/train_best_config_final.sh` | `EMBED_VERSION="qwen3_0.6b"` | L35 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/FINAL_MODEL_README.md` | `--embed_version qwen3_0.6b` | L40 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/FINAL_MODEL_README.md` | `--embed_version qwen3_0.6b \` | L71 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/FINAL_MODEL_README.md` | `--embed_version qwen3_0.6b` | L105 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/ablation_study.sh` | `EMBED_VERSION="qwen3_0.6b"` | L28 |
+| `/root/0/T3Time/train_frets_gated_qwen_fusion_exp.py` | `parser.add_argument('--embed_version', type=str, default='qwen3_0.6b')` | L58 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/ETTh1_hyperopt.sh` | `EMBED_VERSION="qwen3_0.6b"` | L24 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/ablation_study_simple.sh` | `EMBED_VERSION="qwen3_0.6b"` | L25 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/quick_ablation_test.sh` | `EMBED_VERSION="qwen3_0.6b"` | L24 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_FusionExp/train_best_config.sh` | `EMBED_VERSION="qwen3_0.6b"` | L28 |
+| `/root/0/T3Time/scripts/analyze_fusion_vs_t3time.py` | `embed_version='qwen3_0.6b'` | L323 |
+| `/root/0/T3Time/scripts/debug_frets_model.py` | `embed_version='qwen3_0.6b'` | L215 |
+| `/root/0/T3Time/scripts/quick_debug_frets.py` | `embed_version='qwen3_0.6b'` | L32 |
+| `/root/0/T3Time/scripts/T3Time_Pro_Qwen_SOTA_V30/ETTh1.sh` | `EMBED_VERSION="qwen3_0.6b"` | L22 |
+| `/root/0/T3Time/scripts/eval_ensemble.py` | `embed_version='qwen3_0.6b'` | L29 |
+| `/root/0/T3Time/train_learnable_wavelet_packet_pro.py` | `parser.add_argument('--embed_version', type=str, default='qwen3_0.6b')` | L44 |
+| `/root/0/T3Time/scripts/run_learnable_wavelet_packet_etth1_96.sh` | `--embed_version qwen3_0.6b` | L20 |
+| `/root/0/T3Time/train_learnable_wavelet_packet_gated_qwen.py` | `parser.add_argument('--embed_version', type=str, default='qwen3_0.6b', help='embedding version')` | L43 |
+| `/root/0/T3Time/scripts/quick_test_learnable_wavelet_packet.sh` | `--embed_version qwen3_0.6b` | L19 |
+| `/root/0/T3Time/scripts/search_learnable_wavelet_packet_ultimate.py` | `"--embed_version", "qwen3_0.6b"` | L48 |
+| `/root/0/T3Time/train_frets_gated_qwen_fredf.py` | `parser.add_argument('--embed_version', type=str, default='qwen3_0.6b')` | L39 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_Gated_Qwen/ETTh1_fredf.sh` | `EMBED_VERSION="qwen3_0.6b"` | L21 |
+| `/root/0/T3Time/scripts/T3Time_FreTS_Gated_Qwen/ETTh1.sh` | `EMBED_VERSION="qwen3_0.6b"` | L21 |
+| `/root/0/T3Time/scripts/run_frets_gated_qwen_etth1.sh` | `--embed_version qwen3_0.6b \` | L41 |
+| `/root/0/T3Time/scripts/quick_test_frets_gated_qwen.sh` | `--embed_version qwen3_0.6b \` | L20 |
+| `/root/0/T3Time/scripts/T3Time_Wavelet_Packet_Gated_Qwen/ETTh1.sh` | `EMBED_VERSION="qwen3_0.6b"` | L21 |
+| `/root/0/T3Time/scripts/search_all_advanced_models.py` | `EMBED_VERSION = "qwen3_0.6b"` | L13 |
+| `/root/0/T3Time/scripts/search_fft_qwen_lite.py` | `EMBED_VERSION = "qwen3_0.6b"` | L15 |
+| `/root/0/T3Time/train_fft_qwen_lite.py` | `parser.add_argument("--embed_version", type=str, default="qwen3_0.6b", help="embedding version")` | L29 |
+| `/root/0/T3Time/scripts/search_fft_qwen_seeds.py` | `EMBED_VERSION = "qwen3_0.6b"` | L20 |
+| `/root/0/T3Time/train_fft_qwen.py` | `parser.add_argument("--embed_version", type=str, default="qwen3_0.6b",` | L41 |
+| `/root/0/T3Time/train_fft_qwen.py` | `help="嵌入版本标识，用于指定使用哪个版本的embeddings（默认 'qwen3_0.6b'）")` | L42 |
+| `/root/0/T3Time/scripts/quick_test_fft_qwen.sh` | `--embed_version qwen3_0.6b \` | L21 |
+| `/root/0/T3Time/scripts/search_learnable_wavelet_ultimate.py` | `EMBED_VERSION = "qwen3_0.6b"` | L18 |
+| `/root/0/T3Time/scripts/quick_test_learnable_wavelet.sh` | `--embed_version qwen3_0.6b \` | L12 |
+| `/root/0/T3Time/train_learnable_wavelet_gated_shape_qwen.py` | `parser.add_argument("--embed_version", type=str, default="qwen3_0.6b")` | L44 |
+| `/root/0/T3Time/train_wavelet_gated_shape_pro_qwen.py` | `parser.add_argument("--embed_version", type=str, default="qwen3_0.6b")` | L68 |
+| `/root/0/T3Time/scripts/quick_test_shape_pro.sh` | `--embed_version qwen3_0.6b \` | L11 |
+| `/root/0/T3Time/utils/experiment_logger.py` | `embed_version: 嵌入版本（如 original, qwen3_0.6b）` | L35 |
+| `/root/0/T3Time/scripts/search_shape_refine_ultimate.py` | `EMBED_VERSION = "qwen3_0.6b"` | L15 |
+| `/root/0/T3Time/scripts/search_shape_decomp_ultimate.py` | `EMBED_VERSION = "qwen3_0.6b"` | L15 |
+| `/root/0/T3Time/train_wavelet_gated_shape_refine_qwen.py` | `parser.add_argument("--embed_version", type=str, default="qwen3_0.6b")` | L48 |
+| `/root/0/T3Time/scripts/quick_test_shape_refine.sh` | `--embed_version qwen3_0.6b` | L12 |
+| `/root/0/T3Time/train_wavelet_gated_shape_decomp_qwen.py` | `parser.add_argument("--embed_version", type=str, default="qwen3_0.6b")` | L48 |
+| `/root/0/T3Time/train_wavelet_shape_pro_qwen.py` | `parser.add_argument("--embed_version", type=str, default="qwen3_0.6b")` | L52 |
+| `/root/0/T3Time/train_wavelet_gated_shape_qwen.py` | `parser.add_argument("--embed_version", type=str, default="qwen3_0.6b")` | L70 |
+| `/root/0/T3Time/scripts/search_channel_shape_original.py` | `EMBED_VERSION = "qwen3_0.6b"` | L9 |
+| `/root/0/T3Time/scripts/quick_test_shape_original.sh` | `--embed_version qwen3_0.6b` | L12 |
+| `/root/0/T3Time/train_wavelet_decomp_gated_qwen.py` | `parser.add_argument("--embed_version", type=str, default="qwen3_0.6b")` | L116 |
+| `/root/0/T3Time/scripts/quick_test_decomp.sh` | `--embed_version qwen3_0.6b` | L15 |
+| `/root/0/T3Time/train_inception_swiglu_gated_qwen.py` | `parser.add_argument("--embed_version", type=str, default="qwen3_0.6b")` | L37 |
+| `/root/0/T3Time/scripts/quick_test_inception_swiglu.sh` | `--embed_version qwen3_0.6b \` | L15 |
+| `/root/0/T3Time/scripts/quick_test_shape_gated.sh` | `--embed_version qwen3_0.6b \` | L15 |
+| `/root/0/T3Time/scripts/quick_test_packet_gated.sh` | `--embed_version qwen3_0.6b \` | L19 |
+| `/root/0/T3Time/train_wavelet_packet_gated_qwen.py` | `parser.add_argument("--embed_version", type=str, default="qwen3_0.6b")` | L45 |
+| `/root/0/T3Time/train_wavelet_gated_stat_qwen.py` | `parser.add_argument("--embed_version", type=str, default="qwen3_0.6b", help="嵌入版本")` | L47 |
+| `/root/0/T3Time/scripts/search_wavelet_gated_hyperparams.py` | `EMBED_VERSION = "qwen3_0.6b"` | L16 |
+| `/root/0/T3Time/train_wavelet_gated_qwen.py` | `parser.add_argument("--embed_version", type=str, default="qwen3_0.6b",` | L47 |
+| `/root/0/T3Time/train_wavelet_qwen.py` | `parser.add_argument("--embed_version", type=str, default="qwen3_0.6b",` | L47 |
+| `/root/0/T3Time/train_wavelet_qwen.py` | `help="嵌入版本标识，用于指定使用哪个版本的embeddings（如 'original', 'wavelet', 'gpt2', 'qwen3_0.6b'）")` | L48 |
+| `/root/0/T3Time/storage/store_emb_qwen3_0.6b.py` | `from gen_prompt_emb_qwen3_06b import GenPromptEmbQwen3_0_6B` | L22 |
+| `/root/0/T3Time/storage/store_emb_qwen3_0.6b.py` | `default="qwen3_0.6b",` | L45 |
+| `/root/0/T3Time/storage/store_emb_qwen3_0.6b.py` | `help="嵌入版本标识，用于区分不同版本生成的嵌入（默认 'qwen3_0.6b'，不会覆盖原有的 qwen3 嵌入）",` | L46 |
+| `/root/0/T3Time/storage/store_emb_qwen3_0.6b.py` | `gen_prompt_emb = GenPromptEmbQwen3_0_6B(` | L94 |
+| `/root/0/T3Time/storage/store_emb_qwen3_06b.py` | `from gen_prompt_emb_qwen3_06b import GenPromptEmbQwen3_0_6B` | L22 |
+| `/root/0/T3Time/storage/store_emb_qwen3_06b.py` | `default="qwen3_0.6b",` | L45 |
+| `/root/0/T3Time/storage/store_emb_qwen3_06b.py` | `help="嵌入版本标识，用于区分不同版本生成的嵌入（默认 'qwen3_0.6b'，不会覆盖原有的 qwen3 嵌入）",` | L46 |
+| `/root/0/T3Time/storage/store_emb_qwen3_06b.py` | `gen_prompt_emb = GenPromptEmbQwen3_0_6B(` | L94 |
+| `/root/0/T3Time/storage/gen_prompt_emb_qwen3_06b.py` | `class GenPromptEmbQwen3_0_6B(nn.Module):` | L6 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+查看生成嵌入的脚本：
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /root/0/T3Time/storage/store_emb_qwen3_0.6b.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="glob_file_search">
+<details>
+<summary>Tool use: **glob_file_search** • Searched codebase "*generate*qwen*.sh" • **0** result in **1** directory</summary>
+
+Directory: **\root\0\T3Time** (0 file)
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="glob_file_search">
+<details>
+<summary>Tool use: **glob_file_search** • Searched codebase "*gen*qwen*.sh" • **0** result in **1** directory</summary>
+
+Directory: **\root\0\T3Time** (0 file)
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+查找是否有批量生成脚本，或创建一个：
+
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /root/0/T3Time/scripts/generate_embeddings_ETTh1.sh</summary>
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="generic" data-tool-name="list_dir">
+<details>
+            <summary>Tool use: **list_dir** • Listed directory, 0 results</summary>
+        
+No results found
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+创建用于生成 qwen3_0.6b 嵌入的脚本：
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="write">
+
+<details><summary>Tool use: **write** • Edit file: /root/0/T3Time/scripts/generate_qwen3_0.6b_embeddings.sh</summary>
+
+**Chunk 1**
+Lines added: 81, lines removed: 1
+
+```diff
+@@ -1,1 +1,81 @@
+- 
++ #!/bin/bash
++ # 生成 qwen3_0.6b 嵌入文件
++ # 用法: bash scripts/generate_qwen3_0.6b_embeddings.sh [data_path] [gpu_id]
++ # 示例: bash scripts/generate_qwen3_0.6b_embeddings.sh ETTh1 0
++ 
++ set -e
++ 
++ # 参数设置
++ DATA_PATH=${1:-ETTh1}  # 默认 ETTh1
++ GPU_ID=${2:-0}  # 默认 GPU 0
++ 
++ export CUDA_VISIBLE_DEVICES=${GPU_ID}
++ 
++ # 激活 conda 环境（如果需要）
++ eval "$(conda shell.bash hook)" 2&gt;/dev/null || true
++ conda activate TimeCMA_Qwen3 2&gt;/dev/null || source activate TimeCMA_Qwen3 2&gt;/dev/null || true
++ 
++ # 设置 PYTHONPATH
++ export PYTHONPATH="/root/0/T3Time:${PYTHONPATH-}"
++ 
++ echo "=========================================="
++ echo "生成 Qwen3-0.6B 嵌入文件"
++ echo "数据集: ${DATA_PATH}"
++ echo "GPU: ${GPU_ID}"
++ echo "嵌入版本: qwen3_0.6b"
++ echo "=========================================="
++ 
++ # 生成训练集嵌入
++ echo ""
++ echo "1. 生成 TRAIN 嵌入..."
++ python storage/store_emb_qwen3_0.6b.py \
++     --data_path ${DATA_PATH} \
++     --divide train \
++     --input_len 96 \
++     --output_len 96 \
++     --device cuda \
++     --batch_size 1 \
++     --num_workers 4 \
++     --d_model 1024 \
++     --l_layers 28 \
++     --model_name "Qwen/Qwen3-0.6B" \
++     --embed_version qwen3_0.6b
++ 
++ # 生成验证集嵌入
++ echo ""
++ echo "2. 生成 VAL 嵌入..."
++ python storage/store_emb_qwen3_0.6b.py \
++     --data_path ${DATA_PATH} \
++     --divide val \
++     --input_len 96 \
++     --output_len 96 \
++     --device cuda \
++     --batch_size 1 \
++     --num_workers 4 \
++     --d_model 1024 \
++     --l_layers 28 \
++     --model_name "Qwen/Qwen3-0.6B" \
++     --embed_version qwen3_0.6b
++ 
++ # 生成测试集嵌入
++ echo ""
++ echo "3. 生成 TEST 嵌入..."
++ python storage/store_emb_qwen3_0.6b.py \
++     --data_path ${DATA_PATH} \
++     --divide test \
++     --input_len 96 \
++     --output_len 96 \
++     --device cuda \
++     --batch_size 1 \
++     --num_workers 4 \
++     --d_model 1024 \
++     --l_layers 28 \
++     --model_name "Qwen/Qwen3-0.6B" \
++     --embed_version qwen3_0.6b
++ 
++ echo ""
++ echo "=========================================="
++ echo "✅ 所有嵌入文件生成完成！"
++ echo "保存路径: ./Embeddings/${DATA_PATH}/qwen3_0.6b/{train,val,test}/"
++ echo "=========================================="
++ 
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: chmod +x /root/0/T3Time/scripts/generate_qwen3_0.6b_embeddings.sh</summary>
+
+```bash
+chmod +x /root/0/T3Time/scripts/generate_qwen3_0.6b_embeddings.sh
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+修改脚本，使其更通用，不依赖硬编码路径：
+
+
+---
+
+<tool-use data-tool-type="write" data-tool-name="search_replace">
+
+<details><summary>Tool use: **search_replace** • Edit file: /root/0/T3Time/scripts/generate_qwen3_0.6b_embeddings.sh</summary>
+
+**Chunk 1**
+Lines added: 8, lines removed: 1
+
+```diff
+@@ -15,7 +15,14 @@
+  eval "$(conda shell.bash hook)" 2&gt;/dev/null || true
+  conda activate TimeCMA_Qwen3 2&gt;/dev/null || source activate TimeCMA_Qwen3 2&gt;/dev/null || true
++ 
++ # 获取脚本所在目录的父目录（项目根目录）
++ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &amp;&amp; pwd)"
++ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." &amp;&amp; pwd)"
+  
+  # 设置 PYTHONPATH
+- export PYTHONPATH="/root/0/T3Time:${PYTHONPATH-}"
++ export PYTHONPATH="${PROJECT_ROOT}:${PYTHONPATH-}"
++ 
++ # 切换到项目根目录
++ cd "${PROJECT_ROOT}"
+  
+  echo "=========================================="
+```
+
+</details>
+
+</tool-use>
+
+---
+
+<tool-use data-tool-type="read" data-tool-name="read_file">
+<details><summary>Tool use: **read_file** • Read file: /root/0/T3Time/storage/store_emb_qwen3_0.6b.py</summary>
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+已创建生成 qwen3_0.6b 嵌入的脚本。使用方法如下：
+
+## 生成 Qwen3-0.6B 嵌入文件的命令
+
+### 方法 1：使用便捷脚本（推荐）
+
+```bash
+# 在项目根目录下运行
+bash scripts/generate_qwen3_0.6b_embeddings.sh ETTh1 0
+```
+
+参数说明：
+- 第一个参数：数据集名称（如 `ETTh1`, `ETTh2`, `ETTm1`, `ETTm2` 等）
+- 第二个参数：GPU ID（默认 0）
+
+### 方法 2：直接使用 Python 命令
+
+如果需要更精细的控制，可以直接运行 Python 脚本：
+
+```bash
+# 生成训练集嵌入
+python storage/store_emb_qwen3_0.6b.py \
+    --data_path ETTh1 \
+    --divide train \
+    --input_len 96 \
+    --output_len 96 \
+    --device cuda \
+    --batch_size 1 \
+    --num_workers 4 \
+    --d_model 1024 \
+    --l_layers 28 \
+    --model_name "Qwen/Qwen3-0.6B" \
+    --embed_version qwen3_0.6b
+
+# 生成验证集嵌入
+python storage/store_emb_qwen3_0.6b.py \
+    --data_path ETTh1 \
+    --divide val \
+    --input_len 96 \
+    --output_len 96 \
+    --device cuda \
+    --batch_size 1 \
+    --num_workers 4 \
+    --d_model 1024 \
+    --l_layers 28 \
+    --model_name "Qwen/Qwen3-0.6B" \
+    --embed_version qwen3_0.6b
+
+# 生成测试集嵌入
+python storage/store_emb_qwen3_0.6b.py \
+    --data_path ETTh1 \
+    --divide test \
+    --input_len 96 \
+    --output_len 96 \
+    --device cuda \
+    --batch_size 1 \
+    --num_workers 4 \
+    --d_model 1024 \
+    --l_layers 28 \
+    --model_name "Qwen/Qwen3-0.6B" \
+    --embed_version qwen3_0.6b
+```
+
+## 在其他机器上运行的步骤
+
+1. 确保环境已安装：
+   - Python 环境（建议使用 conda）
+   - PyTorch 和 CUDA
+   - transformers 库（用于加载 Qwen3-0.6B 模型）
+   - h5py（用于保存嵌入文件）
+
+2. 确保模型可以下载：
+   - 脚本会自动从 HuggingFace 下载 `Qwen/Qwen3-0.6B` 模型
+   - 如果网络受限，可能需要配置镜像或提前下载模型
+
+3. 运行脚本：
+   ```bash
+   # 激活 conda 环境（如果需要）
+   conda activate TimeCMA_Qwen3
+   
+   # 运行生成脚本
+   bash scripts/generate_qwen3_0.6b_embeddings.sh ETTh1 0
+   ```
+
+4. 检查生成结果：
+   - 嵌入文件会保存在：`./Embeddings/ETTh1/qwen3_0.6b/{train,val,test}/`
+   - 每个文件是一个 `.h5` 文件，包含该批次的嵌入向量
+
+## 注意事项
+
+- 生成嵌入需要一定时间，取决于数据集大小和 GPU 性能
+- 确保有足够的磁盘空间存储嵌入文件
+- 如果内存不足，可以减小 `batch_size`（默认是 1）
+- `num_workers` 可以根据机器 CPU 核心数调整
+
+脚本已创建并添加了执行权限，可以直接使用。
 
 ---
 
