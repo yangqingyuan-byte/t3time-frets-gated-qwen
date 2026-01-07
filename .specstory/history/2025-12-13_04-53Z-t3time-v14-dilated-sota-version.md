@@ -28098,3 +28098,796 @@ python storage/store_emb_qwen3_0.6b.py \
 
 ---
 
+_**User (2026-01-06 11:02Z)**_
+
+modelid为T3Time_FreTS_Gated_Qwen_Hyperopt，预测步长720，种子288里面，mse和mae指标最好的参数组合分别是什么？
+
+---
+
+_**Agent (model default, mode Agent)**_
+
+
+
+---
+
+
+查找指定条件下的最佳参数组合。先搜索相关结果：
+
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for ""model_id":\s*"T3Time_FreTS_Gated_Qwen_Hyperopt".*"pred_len":\s*720.*"seed":\s*288|"seed":\s*288.*"pred_len":\s*720.*"model_id":\s*"T3Time_FreTS_Gated_Qwen_Hyperopt"" in "/root/0/T3Time/experiment_results.log" • 0 matches</summary>
+
+Output mode: content
+
+
+_No matches found_
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for ""model_id":\s*"T3Time_FreTS_Gated_Qwen_Hyperopt"" in "/root/0/T3Time/experiment_results.log" • 2 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_Gated_Qwen_Hyperopt", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.38016167283058167, "test_mae": 0.3926835060119629, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-03 01:38:01", "seed": 2088, "seq_len": 96, "channel": 32, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 2, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true\}` | L4597 |
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_Gated_Qwen_Hyperopt", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.38104498386383057, "test_mae": 0.3924593925476074, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-03 01:40:04", "seed": 2088, "seq_len": 96, "channel": 32, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 4, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true\}` | L4600 |
+
+
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+未找到 seed=288 的结果。搜索 seed=2088 且 pred_len=720 的结果：
+
+
+---
+
+<tool-use data-tool-type="search" data-tool-name="grep">
+<details>
+<summary>Tool use: **grep** • Grep for ""model_id":\s*"T3Time_FreTS_Gated_Qwen_Hyperopt"" in "/root/0/T3Time/experiment_results.log" • 1809 matches</summary>
+
+Output mode: content
+
+
+| File | Content | Line |
+|------|------|------|
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_Gated_Qwen_Hyperopt", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.38016167283058167, "test_mae": 0.3926835060119629, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-03 01:38:01", "seed": 2088, "seq_len": 96, "channel": 32, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 2, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true\}` | L4597 |
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_Gated_Qwen_Hyperopt", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.38104498386383057, "test_mae": 0.3924593925476074, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-03 01:40:04", "seed": 2088, "seq_len": 96, "channel": 32, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 4, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true\}` | L4600 |
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_Gated_Qwen_Hyperopt", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.3810344636440277, "test_mae": 0.3926353454589844, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-03 01:42:09", "seed": 2088, "seq_len": 96, "channel": 32, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 8, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true\}` | L4603 |
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_Gated_Qwen_Hyperopt", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.3794597387313843, "test_mae": 0.39205196499824524, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-03 01:44:15", "seed": 2088, "seq_len": 96, "channel": 32, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.1, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 16, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true\}` | L4606 |
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_Gated_Qwen_Hyperopt", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.3797646760940552, "test_mae": 0.3904061019420624, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-03 01:46:57", "seed": 2088, "seq_len": 96, "channel": 32, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.2, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 2, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true\}` | L4611 |
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_Gated_Qwen_Hyperopt", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.37941256165504456, "test_mae": 0.39102545380592346, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-03 01:48:48", "seed": 2088, "seq_len": 96, "channel": 32, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.2, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 4, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true\}` | L4614 |
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_Gated_Qwen_Hyperopt", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.3793276846408844, "test_mae": 0.3904663920402527, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-03 01:51:33", "seed": 2088, "seq_len": 96, "channel": 32, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.2, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 8, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true\}` | L4617 |
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_Gated_Qwen_Hyperopt", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.37995439767837524, "test_mae": 0.390572190284729, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-03 01:53:40", "seed": 2088, "seq_len": 96, "channel": 32, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.2, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 16, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true\}` | L4620 |
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_Gated_Qwen_Hyperopt", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.38150492310523987, "test_mae": 0.3905438780784607, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-03 01:56:23", "seed": 2088, "seq_len": 96, "channel": 32, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.3, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 2, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true\}` | L4625 |
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_Gated_Qwen_Hyperopt", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.380805641412735, "test_mae": 0.39061304926872253, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-03 01:59:59", "seed": 2088, "seq_len": 96, "channel": 32, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.3, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 4, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true\}` | L4630 |
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_Gated_Qwen_Hyperopt", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.3808348476886749, "test_mae": 0.3908628523349762, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-03 02:04:03", "seed": 2088, "seq_len": 96, "channel": 32, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.3, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 8, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true\}` | L4635 |
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_Gated_Qwen_Hyperopt", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.3809331953525543, "test_mae": 0.3913949429988861, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-03 02:08:12", "seed": 2088, "seq_len": 96, "channel": 32, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.3, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 16, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true\}` | L4640 |
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_Gated_Qwen_Hyperopt", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.38147586584091187, "test_mae": 0.3905012905597687, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-03 02:12:15", "seed": 2088, "seq_len": 96, "channel": 32, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.4, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 2, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true\}` | L4647 |
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_Gated_Qwen_Hyperopt", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.3813517391681671, "test_mae": 0.39051759243011475, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-03 02:15:50", "seed": 2088, "seq_len": 96, "channel": 32, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.4, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 4, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true\}` | L4652 |
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_Gated_Qwen_Hyperopt", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.38228273391723633, "test_mae": 0.39101552963256836, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-03 02:19:55", "seed": 2088, "seq_len": 96, "channel": 32, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.4, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 8, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true\}` | L4657 |
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_Gated_Qwen_Hyperopt", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.3820299208164215, "test_mae": 0.391175240278244, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-03 02:24:04", "seed": 2088, "seq_len": 96, "channel": 32, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.4, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 16, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true\}` | L4662 |
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_Gated_Qwen_Hyperopt", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.3803739547729492, "test_mae": 0.39063358306884766, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-03 02:28:59", "seed": 2088, "seq_len": 96, "channel": 32, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.5, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 2, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true\}` | L4669 |
+| `/root/0/T3Time/experiment_results.log` | `\{"model_id": "T3Time_FreTS_Gated_Qwen_Hyperopt", "data_path": "ETTh1", "pred_len": 96, "test_mse": 0.3809061348438263, "test_mae": 0.39055684208869934, "model": "T3Time_FreTS_Gated_Qwen", "timestamp": "2026-01-03 02:32:35", "seed": 2088, "seq_len": 96, "channel": 32, "batch_size": 16, "learning_rate": 0.0001, "dropout_n": 0.5, "weight_decay": 0.0001, "e_layer": 1, "d_layer": 1, "head": 4, "embed_version": "qwen3_0.6b", "loss_fn": "smooth_l1", "lradj": "type1", "patience": 10, "sparsity_threshold": 0.009, "frets_scale": 0.018, "fusion_mode": "gate", "use_frets": true, "use_sparsity": true, "use_improved_gate": true\}` | L4674 |
+
+
+</details>
+</tool-use>
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: python3 -c "
+import json
+import sys
+
+# 读取实验日志
+results = []
+with open('experiment_results.log', 'r', encoding='utf-8') as f:
+    for line in f:
+        if not line.strip():
+            continue
+        try:
+            data = json.loads(line.strip())
+            if (data.get('model_id') == 'T3Time_FreTS_Gated_Qwen_Hyperopt' and 
+                data.get('pred_len') == 720 and 
+                data.get('seed') == 2088):
+                results.append(data)
+        except:
+            continue
+
+if not results:
+    print('未找到符合条件的实验结果')
+    print('尝试搜索 seed=288...')
+    results = []
+    with open('experiment_results.log', 'r', encoding='utf-8') as f:
+        for line in f:
+            if not line.strip():
+                continue
+            try:
+                data = json.loads(line.strip())
+                if (data.get('model_id') == 'T3Time_FreTS_Gated_Qwen_Hyperopt' and 
+                    data.get('pred_len') == 720 and 
+                    data.get('seed') == 288):
+                    results.append(data)
+            except:
+                continue
+
+if results:
+    # 按MSE排序
+    sorted_mse = sorted(results, key=lambda x: x.get('test_mse', float('inf')))
+    best_mse = sorted_mse[0]
+    
+    # 按MAE排序
+    sorted_mae = sorted(results, key=lambda x: x.get('test_mae', float('inf')))
+    best_mae = sorted_mae[0]
+    
+    print(f'找到 {len(results)} 条实验结果')
+    print(f'\\n种子: {best_mse.get(\"seed\")}')
+    print(f'\\n=== 最佳 MSE 结果 ===')
+    print(f'MSE: {best_mse.get(\"test_mse\"):.6f}')
+    print(f'MAE: {best_mse.get(\"test_mae\"):.6f}')
+    print(f'Channel: {best_mse.get(\"channel\")}')
+    print(f'Dropout: {best_mse.get(\"dropout_n\")}')
+    print(f'Head: {best_mse.get(\"head\")}')
+    print(f'Learning Rate: {best_mse.get(\"learning_rate\")}')
+    print(f'Weight Decay: {best_mse.get(\"weight_decay\")}')
+    print(f'Batch Size: {best_mse.get(\"batch_size\")}')
+    print(f'Loss Function: {best_mse.get(\"loss_fn\")}')
+    
+    print(f'\\n=== 最佳 MAE 结果 ===')
+    print(f'MSE: {best_mae.get(\"test_mse\"):.6f}')
+    print(f'MAE: {best_mae.get(\"test_mae\"):.6f}')
+    print(f'Channel: {best_mae.get(\"channel\")}')
+    print(f'Dropout: {best_mae.get(\"dropout_n\")}')
+    print(f'Head: {best_mae.get(\"head\")}')
+    print(f'Learning Rate: {best_mae.get(\"learning_rate\")}')
+    print(f'Weight Decay: {best_mae.get(\"weight_decay\")}')
+    print(f'Batch Size: {best_mae.get(\"batch_size\")}')
+    print(f'Loss Function: {best_mae.get(\"loss_fn\")}')
+else:
+    print('未找到符合条件的实验结果')
+    print('\\n请检查:')
+    print('1. model_id 是否为 T3Time_FreTS_Gated_Qwen_Hyperopt')
+    print('2. pred_len 是否为 720')
+    print('3. seed 是否为 2088 (或 288)')
+"</summary>
+
+```bash
+python3 -c "
+import json
+import sys
+
+# 读取实验日志
+results = []
+with open('experiment_results.log', 'r', encoding='utf-8') as f:
+    for line in f:
+        if not line.strip():
+            continue
+        try:
+            data = json.loads(line.strip())
+            if (data.get('model_id') == 'T3Time_FreTS_Gated_Qwen_Hyperopt' and 
+                data.get('pred_len') == 720 and 
+                data.get('seed') == 2088):
+                results.append(data)
+        except:
+            continue
+
+if not results:
+    print('未找到符合条件的实验结果')
+    print('尝试搜索 seed=288...')
+    results = []
+    with open('experiment_results.log', 'r', encoding='utf-8') as f:
+        for line in f:
+            if not line.strip():
+                continue
+            try:
+                data = json.loads(line.strip())
+                if (data.get('model_id') == 'T3Time_FreTS_Gated_Qwen_Hyperopt' and 
+                    data.get('pred_len') == 720 and 
+                    data.get('seed') == 288):
+                    results.append(data)
+            except:
+                continue
+
+if results:
+    # 按MSE排序
+    sorted_mse = sorted(results, key=lambda x: x.get('test_mse', float('inf')))
+    best_mse = sorted_mse[0]
+    
+    # 按MAE排序
+    sorted_mae = sorted(results, key=lambda x: x.get('test_mae', float('inf')))
+    best_mae = sorted_mae[0]
+    
+    print(f'找到 {len(results)} 条实验结果')
+    print(f'\\n种子: {best_mse.get(\"seed\")}')
+    print(f'\\n=== 最佳 MSE 结果 ===')
+    print(f'MSE: {best_mse.get(\"test_mse\"):.6f}')
+    print(f'MAE: {best_mse.get(\"test_mae\"):.6f}')
+    print(f'Channel: {best_mse.get(\"channel\")}')
+    print(f'Dropout: {best_mse.get(\"dropout_n\")}')
+    print(f'Head: {best_mse.get(\"head\")}')
+    print(f'Learning Rate: {best_mse.get(\"learning_rate\")}')
+    print(f'Weight Decay: {best_mse.get(\"weight_decay\")}')
+    print(f'Batch Size: {best_mse.get(\"batch_size\")}')
+    print(f'Loss Function: {best_mse.get(\"loss_fn\")}')
+    
+    print(f'\\n=== 最佳 MAE 结果 ===')
+    print(f'MSE: {best_mae.get(\"test_mse\"):.6f}')
+    print(f'MAE: {best_mae.get(\"test_mae\"):.6f}')
+    print(f'Channel: {best_mae.get(\"channel\")}')
+    print(f'Dropout: {best_mae.get(\"dropout_n\")}')
+    print(f'Head: {best_mae.get(\"head\")}')
+    print(f'Learning Rate: {best_mae.get(\"learning_rate\")}')
+    print(f'Weight Decay: {best_mae.get(\"weight_decay\")}')
+    print(f'Batch Size: {best_mae.get(\"batch_size\")}')
+    print(f'Loss Function: {best_mae.get(\"loss_fn\")}')
+else:
+    print('未找到符合条件的实验结果')
+    print('\\n请检查:')
+    print('1. model_id 是否为 T3Time_FreTS_Gated_Qwen_Hyperopt')
+    print('2. pred_len 是否为 720')
+    print('3. seed 是否为 2088 (或 288)')
+"
+```
+
+```
+找到 771 条实验结果
+
+种子: 2088
+
+=== 最佳 MSE 结果 ===
+MSE: 0.462425
+MAE: 0.458175
+Channel: 64
+Dropout: 0.5
+Head: 8
+Learning Rate: 7.5e-05
+Weight Decay: 0.0005
+Batch Size: 32
+Loss Function: smooth_l1
+
+=== 最佳 MAE 结果 ===
+MSE: 0.468055
+MAE: 0.456385
+Channel: 64
+Dropout: 0.5
+Head: 8
+Learning Rate: 5e-05
+Weight Decay: 0.0001
+Batch Size: 32
+Loss Function: smooth_l1
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+已找到结果。种子应为 2088（不是 288）。生成更详细的参数组合报告：
+
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: python3 -c "
+import json
+
+# 读取实验日志
+results = []
+with open('experiment_results.log', 'r', encoding='utf-8') as f:
+    for line in f:
+        if not line.strip():
+            continue
+        try:
+            data = json.loads(line.strip())
+            if (data.get('model_id') == 'T3Time_FreTS_Gated_Qwen_Hyperopt' and 
+                data.get('pred_len') == 720 and 
+                data.get('seed') == 2088):
+                results.append(data)
+        except:
+            continue
+
+if results:
+    # 按MSE排序
+    sorted_mse = sorted(results, key=lambda x: x.get('test_mse', float('inf')))
+    best_mse = sorted_mse[0]
+    
+    # 按MAE排序
+    sorted_mae = sorted(results, key=lambda x: x.get('test_mae', float('inf')))
+    best_mae = sorted_mae[0]
+    
+    print('='*80)
+    print('T3Time_FreTS_Gated_Qwen_Hyperopt - 预测步长720 - 种子2088')
+    print('='*80)
+    print(f'\\n找到 {len(results)} 条实验结果\\n')
+    
+    print('='*80)
+    print('🏆 最佳 MSE 参数组合')
+    print('='*80)
+    print(f'Test MSE:       {best_mse.get(\"test_mse\"):.6f}')
+    print(f'Test MAE:       {best_mse.get(\"test_mae\"):.6f}')
+    print(f'\\n【模型参数】')
+    print(f'  Channel:        {best_mse.get(\"channel\")}')
+    print(f'  Head:           {best_mse.get(\"head\")}')
+    print(f'  E_Layer:        {best_mse.get(\"e_layer\")}')
+    print(f'  D_Layer:        {best_mse.get(\"d_layer\")}')
+    print(f'\\n【训练参数】')
+    print(f'  Learning Rate:  {best_mse.get(\"learning_rate\")}')
+    print(f'  Weight Decay:    {best_mse.get(\"weight_decay\")}')
+    print(f'  Dropout:        {best_mse.get(\"dropout_n\")}')
+    print(f'  Batch Size:     {best_mse.get(\"batch_size\")}')
+    print(f'  Loss Function:  {best_mse.get(\"loss_fn\")}')
+    print(f'  LR Adjust:      {best_mse.get(\"lradj\")}')
+    print(f'\\n【其他参数】')
+    print(f'  Data Path:      {best_mse.get(\"data_path\")}')
+    print(f'  Seq Len:        {best_mse.get(\"seq_len\")}')
+    print(f'  Pred Len:       {best_mse.get(\"pred_len\")}')
+    print(f'  Embed Version:  {best_mse.get(\"embed_version\")}')
+    print(f'  Epochs:         {best_mse.get(\"epochs\", \"N/A\")}')
+    print(f'  Patience:       {best_mse.get(\"patience\")}')
+    print(f'  Seed:           {best_mse.get(\"seed\")}')
+    print(f'  Timestamp:      {best_mse.get(\"timestamp\")}')
+    
+    print('\\n' + '='*80)
+    print('📋 最佳 MSE 参数组合（命令行格式）')
+    print('='*80)
+    print('python train_frets_gated_qwen.py \\\\')
+    print(f'    --data_path {best_mse.get(\"data_path\", \"ETTh1\")} \\\\')
+    print(f'    --seq_len {best_mse.get(\"seq_len\", 96)} \\\\')
+    print(f'    --pred_len {best_mse.get(\"pred_len\", 720)} \\\\')
+    print(f'    --channel {best_mse.get(\"channel\")} \\\\')
+    print(f'    --head {best_mse.get(\"head\")} \\\\')
+    print(f'    --e_layer {best_mse.get(\"e_layer\", 1)} \\\\')
+    print(f'    --d_layer {best_mse.get(\"d_layer\", 1)} \\\\')
+    print(f'    --learning_rate {best_mse.get(\"learning_rate\")} \\\\')
+    print(f'    --weight_decay {best_mse.get(\"weight_decay\")} \\\\')
+    print(f'    --dropout_n {best_mse.get(\"dropout_n\")} \\\\')
+    print(f'    --batch_size {best_mse.get(\"batch_size\")} \\\\')
+    print(f'    --loss_fn {best_mse.get(\"loss_fn\")} \\\\')
+    print(f'    --lradj {best_mse.get(\"lradj\", \"type1\")} \\\\')
+    print(f'    --embed_version {best_mse.get(\"embed_version\", \"qwen3_0.6b\")} \\\\')
+    print(f'    --epochs {best_mse.get(\"epochs\", 150)} \\\\')
+    print(f'    --es_patience {best_mse.get(\"patience\", 10)} \\\\')
+    print(f'    --seed {best_mse.get(\"seed\")}')
+    
+    print('\\n' + '='*80)
+    print('🏆 最佳 MAE 参数组合')
+    print('='*80)
+    print(f'Test MSE:       {best_mae.get(\"test_mse\"):.6f}')
+    print(f'Test MAE:       {best_mae.get(\"test_mae\"):.6f}')
+    print(f'\\n【模型参数】')
+    print(f'  Channel:        {best_mae.get(\"channel\")}')
+    print(f'  Head:           {best_mae.get(\"head\")}')
+    print(f'  E_Layer:        {best_mae.get(\"e_layer\")}')
+    print(f'  D_Layer:        {best_mae.get(\"d_layer\")}')
+    print(f'\\n【训练参数】')
+    print(f'  Learning Rate:  {best_mae.get(\"learning_rate\")}')
+    print(f'  Weight Decay:    {best_mae.get(\"weight_decay\")}')
+    print(f'  Dropout:        {best_mae.get(\"dropout_n\")}')
+    print(f'  Batch Size:     {best_mae.get(\"batch_size\")}')
+    print(f'  Loss Function:  {best_mae.get(\"loss_fn\")}')
+    print(f'  LR Adjust:      {best_mae.get(\"lradj\")}')
+    print(f'\\n【其他参数】')
+    print(f'  Data Path:      {best_mae.get(\"data_path\")}')
+    print(f'  Seq Len:        {best_mae.get(\"seq_len\")}')
+    print(f'  Pred Len:       {best_mae.get(\"pred_len\")}')
+    print(f'  Embed Version:  {best_mae.get(\"embed_version\")}')
+    print(f'  Epochs:         {best_mae.get(\"epochs\", \"N/A\")}')
+    print(f'  Patience:       {best_mae.get(\"patience\")}')
+    print(f'  Seed:           {best_mae.get(\"seed\")}')
+    print(f'  Timestamp:      {best_mae.get(\"timestamp\")}')
+    
+    print('\\n' + '='*80)
+    print('📋 最佳 MAE 参数组合（命令行格式）')
+    print('='*80)
+    print('python train_frets_gated_qwen.py \\\\')
+    print(f'    --data_path {best_mae.get(\"data_path\", \"ETTh1\")} \\\\')
+    print(f'    --seq_len {best_mae.get(\"seq_len\", 96)} \\\\')
+    print(f'    --pred_len {best_mae.get(\"pred_len\", 720)} \\\\')
+    print(f'    --channel {best_mae.get(\"channel\")} \\\\')
+    print(f'    --head {best_mae.get(\"head\")} \\\\')
+    print(f'    --e_layer {best_mae.get(\"e_layer\", 1)} \\\\')
+    print(f'    --d_layer {best_mae.get(\"d_layer\", 1)} \\\\')
+    print(f'    --learning_rate {best_mae.get(\"learning_rate\")} \\\\')
+    print(f'    --weight_decay {best_mae.get(\"weight_decay\")} \\\\')
+    print(f'    --dropout_n {best_mae.get(\"dropout_n\")} \\\\')
+    print(f'    --batch_size {best_mae.get(\"batch_size\")} \\\\')
+    print(f'    --loss_fn {best_mae.get(\"loss_fn\")} \\\\')
+    print(f'    --lradj {best_mae.get(\"lradj\", \"type1\")} \\\\')
+    print(f'    --embed_version {best_mae.get(\"embed_version\", \"qwen3_0.6b\")} \\\\')
+    print(f'    --epochs {best_mae.get(\"epochs\", 150)} \\\\')
+    print(f'    --es_patience {best_mae.get(\"patience\", 10)} \\\\')
+    print(f'    --seed {best_mae.get(\"seed\")}')
+    
+    # 检查是否来自同一个实验
+    if best_mse.get('test_mse') == best_mae.get('test_mse') and best_mse.get('test_mae') == best_mae.get('test_mae'):
+        print('\\n✅ 最佳 MSE 和最佳 MAE 来自同一个实验！')
+    else:
+        print('\\n⚠️  最佳 MSE 和最佳 MAE 来自不同的实验')
+else:
+    print('未找到符合条件的实验结果')
+"</summary>
+
+```bash
+python3 -c "
+import json
+
+# 读取实验日志
+results = []
+with open('experiment_results.log', 'r', encoding='utf-8') as f:
+    for line in f:
+        if not line.strip():
+            continue
+        try:
+            data = json.loads(line.strip())
+            if (data.get('model_id') == 'T3Time_FreTS_Gated_Qwen_Hyperopt' and 
+                data.get('pred_len') == 720 and 
+                data.get('seed') == 2088):
+                results.append(data)
+        except:
+            continue
+
+if results:
+    # 按MSE排序
+    sorted_mse = sorted(results, key=lambda x: x.get('test_mse', float('inf')))
+    best_mse = sorted_mse[0]
+    
+    # 按MAE排序
+    sorted_mae = sorted(results, key=lambda x: x.get('test_mae', float('inf')))
+    best_mae = sorted_mae[0]
+    
+    print('='*80)
+    print('T3Time_FreTS_Gated_Qwen_Hyperopt - 预测步长720 - 种子2088')
+    print('='*80)
+    print(f'\\n找到 {len(results)} 条实验结果\\n')
+    
+    print('='*80)
+    print('🏆 最佳 MSE 参数组合')
+    print('='*80)
+    print(f'Test MSE:       {best_mse.get(\"test_mse\"):.6f}')
+    print(f'Test MAE:       {best_mse.get(\"test_mae\"):.6f}')
+    print(f'\\n【模型参数】')
+    print(f'  Channel:        {best_mse.get(\"channel\")}')
+    print(f'  Head:           {best_mse.get(\"head\")}')
+    print(f'  E_Layer:        {best_mse.get(\"e_layer\")}')
+    print(f'  D_Layer:        {best_mse.get(\"d_layer\")}')
+    print(f'\\n【训练参数】')
+    print(f'  Learning Rate:  {best_mse.get(\"learning_rate\")}')
+    print(f'  Weight Decay:    {best_mse.get(\"weight_decay\")}')
+    print(f'  Dropout:        {best_mse.get(\"dropout_n\")}')
+    print(f'  Batch Size:     {best_mse.get(\"batch_size\")}')
+    print(f'  Loss Function:  {best_mse.get(\"loss_fn\")}')
+    print(f'  LR Adjust:      {best_mse.get(\"lradj\")}')
+    print(f'\\n【其他参数】')
+    print(f'  Data Path:      {best_mse.get(\"data_path\")}')
+    print(f'  Seq Len:        {best_mse.get(\"seq_len\")}')
+    print(f'  Pred Len:       {best_mse.get(\"pred_len\")}')
+    print(f'  Embed Version:  {best_mse.get(\"embed_version\")}')
+    print(f'  Epochs:         {best_mse.get(\"epochs\", \"N/A\")}')
+    print(f'  Patience:       {best_mse.get(\"patience\")}')
+    print(f'  Seed:           {best_mse.get(\"seed\")}')
+    print(f'  Timestamp:      {best_mse.get(\"timestamp\")}')
+    
+    print('\\n' + '='*80)
+    print('📋 最佳 MSE 参数组合（命令行格式）')
+    print('='*80)
+    print('python train_frets_gated_qwen.py \\\\')
+    print(f'    --data_path {best_mse.get(\"data_path\", \"ETTh1\")} \\\\')
+    print(f'    --seq_len {best_mse.get(\"seq_len\", 96)} \\\\')
+    print(f'    --pred_len {best_mse.get(\"pred_len\", 720)} \\\\')
+    print(f'    --channel {best_mse.get(\"channel\")} \\\\')
+    print(f'    --head {best_mse.get(\"head\")} \\\\')
+    print(f'    --e_layer {best_mse.get(\"e_layer\", 1)} \\\\')
+    print(f'    --d_layer {best_mse.get(\"d_layer\", 1)} \\\\')
+    print(f'    --learning_rate {best_mse.get(\"learning_rate\")} \\\\')
+    print(f'    --weight_decay {best_mse.get(\"weight_decay\")} \\\\')
+    print(f'    --dropout_n {best_mse.get(\"dropout_n\")} \\\\')
+    print(f'    --batch_size {best_mse.get(\"batch_size\")} \\\\')
+    print(f'    --loss_fn {best_mse.get(\"loss_fn\")} \\\\')
+    print(f'    --lradj {best_mse.get(\"lradj\", \"type1\")} \\\\')
+    print(f'    --embed_version {best_mse.get(\"embed_version\", \"qwen3_0.6b\")} \\\\')
+    print(f'    --epochs {best_mse.get(\"epochs\", 150)} \\\\')
+    print(f'    --es_patience {best_mse.get(\"patience\", 10)} \\\\')
+    print(f'    --seed {best_mse.get(\"seed\")}')
+    
+    print('\\n' + '='*80)
+    print('🏆 最佳 MAE 参数组合')
+    print('='*80)
+    print(f'Test MSE:       {best_mae.get(\"test_mse\"):.6f}')
+    print(f'Test MAE:       {best_mae.get(\"test_mae\"):.6f}')
+    print(f'\\n【模型参数】')
+    print(f'  Channel:        {best_mae.get(\"channel\")}')
+    print(f'  Head:           {best_mae.get(\"head\")}')
+    print(f'  E_Layer:        {best_mae.get(\"e_layer\")}')
+    print(f'  D_Layer:        {best_mae.get(\"d_layer\")}')
+    print(f'\\n【训练参数】')
+    print(f'  Learning Rate:  {best_mae.get(\"learning_rate\")}')
+    print(f'  Weight Decay:    {best_mae.get(\"weight_decay\")}')
+    print(f'  Dropout:        {best_mae.get(\"dropout_n\")}')
+    print(f'  Batch Size:     {best_mae.get(\"batch_size\")}')
+    print(f'  Loss Function:  {best_mae.get(\"loss_fn\")}')
+    print(f'  LR Adjust:      {best_mae.get(\"lradj\")}')
+    print(f'\\n【其他参数】')
+    print(f'  Data Path:      {best_mae.get(\"data_path\")}')
+    print(f'  Seq Len:        {best_mae.get(\"seq_len\")}')
+    print(f'  Pred Len:       {best_mae.get(\"pred_len\")}')
+    print(f'  Embed Version:  {best_mae.get(\"embed_version\")}')
+    print(f'  Epochs:         {best_mae.get(\"epochs\", \"N/A\")}')
+    print(f'  Patience:       {best_mae.get(\"patience\")}')
+    print(f'  Seed:           {best_mae.get(\"seed\")}')
+    print(f'  Timestamp:      {best_mae.get(\"timestamp\")}')
+    
+    print('\\n' + '='*80)
+    print('📋 最佳 MAE 参数组合（命令行格式）')
+    print('='*80)
+    print('python train_frets_gated_qwen.py \\\\')
+    print(f'    --data_path {best_mae.get(\"data_path\", \"ETTh1\")} \\\\')
+    print(f'    --seq_len {best_mae.get(\"seq_len\", 96)} \\\\')
+    print(f'    --pred_len {best_mae.get(\"pred_len\", 720)} \\\\')
+    print(f'    --channel {best_mae.get(\"channel\")} \\\\')
+    print(f'    --head {best_mae.get(\"head\")} \\\\')
+    print(f'    --e_layer {best_mae.get(\"e_layer\", 1)} \\\\')
+    print(f'    --d_layer {best_mae.get(\"d_layer\", 1)} \\\\')
+    print(f'    --learning_rate {best_mae.get(\"learning_rate\")} \\\\')
+    print(f'    --weight_decay {best_mae.get(\"weight_decay\")} \\\\')
+    print(f'    --dropout_n {best_mae.get(\"dropout_n\")} \\\\')
+    print(f'    --batch_size {best_mae.get(\"batch_size\")} \\\\')
+    print(f'    --loss_fn {best_mae.get(\"loss_fn\")} \\\\')
+    print(f'    --lradj {best_mae.get(\"lradj\", \"type1\")} \\\\')
+    print(f'    --embed_version {best_mae.get(\"embed_version\", \"qwen3_0.6b\")} \\\\')
+    print(f'    --epochs {best_mae.get(\"epochs\", 150)} \\\\')
+    print(f'    --es_patience {best_mae.get(\"patience\", 10)} \\\\')
+    print(f'    --seed {best_mae.get(\"seed\")}')
+    
+    # 检查是否来自同一个实验
+    if best_mse.get('test_mse') == best_mae.get('test_mse') and best_mse.get('test_mae') == best_mae.get('test_mae'):
+        print('\\n✅ 最佳 MSE 和最佳 MAE 来自同一个实验！')
+    else:
+        print('\\n⚠️  最佳 MSE 和最佳 MAE 来自不同的实验')
+else:
+    print('未找到符合条件的实验结果')
+"
+```
+
+```
+================================================================================
+T3Time_FreTS_Gated_Qwen_Hyperopt - 预测步长720 - 种子2088
+================================================================================
+
+找到 771 条实验结果
+
+================================================================================
+🏆 最佳 MSE 参数组合
+================================================================================
+Test MSE:       0.462425
+Test MAE:       0.458175
+
+【模型参数】
+  Channel:        64
+  Head:           8
+  E_Layer:        1
+  D_Layer:        1
+
+【训练参数】
+  Learning Rate:  7.5e-05
+  Weight Decay:    0.0005
+  Dropout:        0.5
+  Batch Size:     32
+  Loss Function:  smooth_l1
+  LR Adjust:      type1
+
+【其他参数】
+  Data Path:      ETTh1
+  Seq Len:        96
+  Pred Len:       720
+  Embed Version:  qwen3_0.6b
+  Epochs:         N/A
+  Patience:       10
+  Seed:           2088
+  Timestamp:      2026-01-04 17:02:04
+
+================================================================================
+📋 最佳 MSE 参数组合（命令行格式）
+================================================================================
+python train_frets_gated_qwen.py \
+    --data_path ETTh1 \
+    --seq_len 96 \
+    --pred_len 720 \
+    --channel 64 \
+    --head 8 \
+    --e_layer 1 \
+    --d_layer 1 \
+    --learning_rate 7.5e-05 \
+    --weight_decay 0.0005 \
+    --dropout_n 0.5 \
+    --batch_size 32 \
+    --loss_fn smooth_l1 \
+    --lradj type1 \
+    --embed_version qwen3_0.6b \
+    --epochs 150 \
+    --es_patience 10 \
+    --seed 2088
+
+================================================================================
+🏆 最佳 MAE 参数组合
+================================================================================
+Test MSE:       0.468055
+Test MAE:       0.456385
+
+【模型参数】
+  Channel:        64
+  Head:           8
+  E_Layer:        1
+  D_Layer:        1
+
+【训练参数】
+  Learning Rate:  5e-05
+  Weight Decay:    0.0001
+  Dropout:        0.5
+  Batch Size:     32
+  Loss Function:  smooth_l1
+  LR Adjust:      type1
+
+【其他参数】
+  Data Path:      ETTh1
+  Seq Len:        96
+  Pred Len:       720
+  Embed Version:  qwen3_0.6b
+  Epochs:         N/A
+  Patience:       10
+  Seed:           2088
+  Timestamp:      2026-01-04 16:07:25
+
+================================================================================
+📋 最佳 MAE 参数组合（命令行格式）
+================================================================================
+python train_frets_gated_qwen.py \
+    --data_path ETTh1 \
+    --seq_len 96 \
+    --pred_len 720 \
+    --channel 64 \
+    --head 8 \
+    --e_layer 1 \
+    --d_layer 1 \
+    --learning_rate 5e-05 \
+    --weight_decay 0.0001 \
+    --dropout_n 0.5 \
+    --batch_size 32 \
+    --loss_fn smooth_l1 \
+    --lradj type1 \
+    --embed_version qwen3_0.6b \
+    --epochs 150 \
+    --es_patience 10 \
+    --seed 2088
+
+⚠️  最佳 MSE 和最佳 MAE 来自不同的实验
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+已找到结果。注意：种子应为 **2088**（不是 288）。在 771 条实验结果中，最佳参数组合如下：
+
+## 最佳 MSE 参数组合
+
+**指标：**
+- Test MSE: **0.462425**
+- Test MAE: 0.458175
+
+**参数：**
+- Channel: **64**
+- Head: **8**
+- E_Layer: **1**
+- D_Layer: **1**
+- Learning Rate: **7.5e-05**
+- Weight Decay: **0.0005**
+- Dropout: **0.5**
+- Batch Size: **32**
+- Loss Function: **smooth_l1**
+
+**完整命令：**
+```bash
+python train_frets_gated_qwen.py \
+    --data_path ETTh1 \
+    --seq_len 96 \
+    --pred_len 720 \
+    --channel 64 \
+    --head 8 \
+    --e_layer 1 \
+    --d_layer 1 \
+    --learning_rate 7.5e-05 \
+    --weight_decay 0.0005 \
+    --dropout_n 0.5 \
+    --batch_size 32 \
+    --loss_fn smooth_l1 \
+    --lradj type1 \
+    --embed_version qwen3_0.6b \
+    --epochs 150 \
+    --es_patience 10 \
+    --seed 2088
+```
+
+---
+
+## 最佳 MAE 参数组合
+
+**指标：**
+- Test MSE: 0.468055
+- Test MAE: **0.456385**
+
+**参数：**
+- Channel: **64**
+- Head: **8**
+- E_Layer: **1**
+- D_Layer: **1**
+- Learning Rate: **5e-05**
+- Weight Decay: **0.0001**
+- Dropout: **0.5**
+- Batch Size: **32**
+- Loss Function: **smooth_l1**
+
+**完整命令：**
+```bash
+python train_frets_gated_qwen.py \
+    --data_path ETTh1 \
+    --seq_len 96 \
+    --pred_len 720 \
+    --channel 64 \
+    --head 8 \
+    --e_layer 1 \
+    --d_layer 1 \
+    --learning_rate 5e-05 \
+    --weight_decay 0.0001 \
+    --dropout_n 0.5 \
+    --batch_size 32 \
+    --loss_fn smooth_l1 \
+    --lradj type1 \
+    --embed_version qwen3_0.6b \
+    --epochs 150 \
+    --es_patience 10 \
+    --seed 2088
+```
+
+---
+
+## 总结
+
+- 两个组合的 Channel、Head、Dropout、Batch Size 相同（64, 8, 0.5, 32）
+- 主要差异：
+  - 最佳 MSE：Learning Rate = 7.5e-05, Weight Decay = 0.0005
+  - 最佳 MAE：Learning Rate = 5e-05, Weight Decay = 0.0001
+- 两个组合来自不同实验，说明 MSE 和 MAE 的最优参数不完全一致
+
+如需查看 seed=288 的结果，请告知，我可以重新搜索。
+
+---
+
