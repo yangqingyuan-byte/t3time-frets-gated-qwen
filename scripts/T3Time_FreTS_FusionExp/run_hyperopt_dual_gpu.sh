@@ -12,12 +12,12 @@ PARALLEL_SCRIPT="${SCRIPT_DIR}/hyperopt_pred720_seed2088_parallel.sh"
 
 # 使用与 hyperopt_pred720_seed2088_parallel.sh 完全相同的逻辑计算总实验数
 # 必须按照相同的顺序生成实验配置，确保索引对应关系正确
-CHANNELS=(64 96 128)
-DROPOUTS=(0.1 0.3 0.5 0.7 0.9)
-HEADS=(6 8 12 16)
-LEARNING_RATES=(5e-5 6e-5 7e-5 7.5e-5 8e-5 1e-4)
+CHANNELS=(128 256)
+DROPOUTS=(0.5 0.6 0.7)
+HEADS=(8 16)
+LEARNING_RATES=(5e-5 7.5e-5 1e-4)
 WEIGHT_DECAYS=(1e-4 5e-4 1e-3 2e-3)
-LOSS_FNS=("mse")
+LOSS_FNS=("mse" "smooth_l1")
 BATCH_SIZES=(16 32)
 
 # 按照与 hyperopt_pred720_seed2088_parallel.sh 完全相同的顺序生成实验配置

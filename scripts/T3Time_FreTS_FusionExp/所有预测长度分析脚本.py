@@ -430,37 +430,77 @@ def print_summary_table(results_by_pred_len, pred_lens=[96, 192, 336, 720]):
     print("📊 所有预测长度的最佳结果汇总")
     print("="*80)
     
-    # MSE 汇总
+    # MSE 汇总（添加综合均值）
     print("\n【最小 MSE 汇总】")
     print(f"{'Pred_Len':<12} {'Channel':<10} {'Dropout':<10} {'Head':<8} {'LR':<12} {'WD':<12} {'BS':<8} {'MSE':<15} {'MAE':<15}")
     print("-"*100)
+    
+    mse_values = []
+    mae_values = []
+    
     for pred_len in pred_lens:
         data = results_by_pred_len.get(pred_len, {})
         best_mse = data.get('best_mse')
         if best_mse:
+            mse_val = best_mse.get('test_mse')
+            mae_val = best_mse.get('test_mae')
+            
+            if mse_val is not None:
+                mse_values.append(mse_val)
+            if mae_val is not None:
+                mae_values.append(mae_val)
+            
             print(f"{pred_len:<12} {best_mse.get('channel', 'N/A'):<10} "
                   f"{best_mse.get('dropout_n', 'N/A'):<10.1f} {best_mse.get('head', 'N/A'):<8} "
                   f"{best_mse.get('learning_rate', 'N/A'):<12} {best_mse.get('weight_decay', 'N/A'):<12} "
                   f"{best_mse.get('batch_size', 'N/A'):<8} "
-                  f"{best_mse.get('test_mse', 'N/A'):<15.6f} {best_mse.get('test_mae', 'N/A'):<15.6f}")
+                  f"{mse_val:<15.6f} {mae_val:<15.6f}")
         else:
             print(f"{pred_len:<12} {'N/A':<10} {'N/A':<10} {'N/A':<8} {'N/A':<12} {'N/A':<12} {'N/A':<8} {'N/A':<15} {'N/A':<15}")
     
-    # MAE 汇总
+    # 显示综合均值
+    if mse_values and mae_values:
+        mse_avg = sum(mse_values) / len(mse_values)
+        mae_avg = sum(mae_values) / len(mae_values)
+        print("-"*100)
+        print(f"{'综合均值':<12} {'':<10} {'':<10} {'':<8} {'':<12} {'':<12} {'':<8} "
+              f"{mse_avg:<15.6f} {mae_avg:<15.6f}")
+    
+    # MAE 汇总（添加综合均值）
     print("\n【最小 MAE 汇总】")
     print(f"{'Pred_Len':<12} {'Channel':<10} {'Dropout':<10} {'Head':<8} {'LR':<12} {'WD':<12} {'BS':<8} {'MSE':<15} {'MAE':<15}")
     print("-"*100)
+    
+    mse_values_mae = []
+    mae_values_mae = []
+    
     for pred_len in pred_lens:
         data = results_by_pred_len.get(pred_len, {})
         best_mae = data.get('best_mae')
         if best_mae:
+            mse_val = best_mae.get('test_mse')
+            mae_val = best_mae.get('test_mae')
+            
+            if mse_val is not None:
+                mse_values_mae.append(mse_val)
+            if mae_val is not None:
+                mae_values_mae.append(mae_val)
+            
             print(f"{pred_len:<12} {best_mae.get('channel', 'N/A'):<10} "
                   f"{best_mae.get('dropout_n', 'N/A'):<10.1f} {best_mae.get('head', 'N/A'):<8} "
                   f"{best_mae.get('learning_rate', 'N/A'):<12} {best_mae.get('weight_decay', 'N/A'):<12} "
                   f"{best_mae.get('batch_size', 'N/A'):<8} "
-                  f"{best_mae.get('test_mse', 'N/A'):<15.6f} {best_mae.get('test_mae', 'N/A'):<15.6f}")
+                  f"{mse_val:<15.6f} {mae_val:<15.6f}")
         else:
             print(f"{pred_len:<12} {'N/A':<10} {'N/A':<10} {'N/A':<8} {'N/A':<12} {'N/A':<12} {'N/A':<8} {'N/A':<15} {'N/A':<15}")
+    
+    # 显示综合均值
+    if mse_values_mae and mae_values_mae:
+        mse_avg_mae = sum(mse_values_mae) / len(mse_values_mae)
+        mae_avg_mae = sum(mae_values_mae) / len(mae_values_mae)
+        print("-"*100)
+        print(f"{'综合均值':<12} {'':<10} {'':<10} {'':<8} {'':<12} {'':<12} {'':<8} "
+              f"{mse_avg_mae:<15.6f} {mae_avg_mae:<15.6f}")
 
 def main():
     """主函数"""
@@ -490,11 +530,11 @@ def main():
     print_summary_table(results_by_pred_len, args.pred_lens)
     
     # 打印每个预测长度的详细结果
-    print_results_by_pred_len(results_by_pred_len, args.pred_lens)
+    # print_results_by_pred_len(results_by_pred_len, args.pred_lens)
     
-    print("\n" + "="*80)
-    print("分析完成！")
-    print("="*80)
+    # print("\n" + "="*80)
+    # print("分析完成！")
+    # print("="*80)
 
 if __name__ == "__main__":
     main()
