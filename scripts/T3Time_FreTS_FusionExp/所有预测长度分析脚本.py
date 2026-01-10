@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-检索 seed=2088 参数寻优实验的最佳参数组合
+检索 T3Time_FreTS_FusionExp 模型的所有种子的参数寻优实验结果
 按预测长度（96, 192, 336, 720）分别分析
+支持分析所有种子或指定种子的实验结果
 """
 import json
 import os
@@ -14,8 +15,15 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-def load_hyperopt_results(result_file=None, seed=2088, model_id_prefix="T3Time_FreTS_Gated_Qwen_Hyperopt"):
-    """加载参数寻优实验结果"""
+def load_hyperopt_results(result_file=None, seed=None, model_id_prefix="T3Time_FreTS_Gated_Qwen_Hyperopt"):
+    """
+    加载参数寻优实验结果
+    
+    Args:
+        result_file: 结果文件路径，默认为 experiment_results.log
+        seed: 随机种子，如果为 None 则加载所有种子的结果
+        model_id_prefix: 模型ID前缀
+    """
     if result_file is None:
         result_file = os.path.join(project_root, "experiment_results.log")
     
@@ -32,9 +40,10 @@ def load_hyperopt_results(result_file=None, seed=2088, model_id_prefix="T3Time_F
             try:
                 data = json.loads(line.strip())
                 # 检查是否是参数寻优实验结果
-                if (data.get('seed') == seed and 
-                    data.get('model_id', '').startswith(model_id_prefix)):
-                    results.append(data)
+                if data.get('model_id', '').startswith(model_id_prefix):
+                    # 如果指定了 seed，则只加载该 seed 的结果；否则加载所有 seed
+                    if seed is None or data.get('seed') == seed:
+                        results.append(data)
             except json.JSONDecodeError as e:
                 continue
             except Exception as e:
@@ -106,16 +115,40 @@ def find_best_params_by_pred_len(results, pred_lens=[96, 192, 336, 720]):
     
     return results_by_pred_len
 
-def print_results_by_pred_len(results_by_pred_len, pred_lens=[96, 192, 336, 720]):
+def get_seed_statistics(results):
+    """统计所有结果的种子分布"""
+    seed_counts = defaultdict(int)
+    seed_by_pred_len = defaultdict(lambda: defaultdict(int))
+    
+    for r in results:
+        seed = r.get('seed', 'Unknown')
+        pred_len = r.get('pred_len', 'Unknown')
+        seed_counts[seed] += 1
+        seed_by_pred_len[pred_len][seed] += 1
+    
+    return seed_counts, seed_by_pred_len
+
+def print_results_by_pred_len(results_by_pred_len, pred_lens=[96, 192, 336, 720], all_results=None):
     """按预测长度打印结果"""
     print("="*80)
-    print("T3Time_FreTS_Gated_Qwen 参数寻优结果分析 (Seed=2088)")
+    print("T3Time_FreTS_Gated_Qwen 参数寻优结果分析（所有种子）")
     print("按预测长度分别分析: {}".format(", ".join(map(str, pred_lens))))
     print("="*80)
     
-    # 统计总结果数
+    # 统计总结果数和种子分布
     total_results = sum(data['count'] for data in results_by_pred_len.values())
-    print(f"\n找到 {total_results} 条实验结果\n")
+    
+    if all_results:
+        seed_counts, seed_by_pred_len_stats = get_seed_statistics(all_results)
+        print(f"\n找到 {total_results} 条实验结果")
+        print(f"涉及 {len(seed_counts)} 个不同的种子: {sorted(seed_counts.keys())}")
+        print("\n种子分布统计:")
+        print(f"{'Seed':<10} {'总实验数':<12}")
+        print("-"*25)
+        for seed in sorted(seed_counts.keys()):
+            print(f"{seed:<10} {seed_counts[seed]:<12}")
+    else:
+        print(f"\n找到 {total_results} 条实验结果\n")
     
     # 对每个预测长度分别分析
     for pred_len in pred_lens:
@@ -170,7 +203,7 @@ def print_single_pred_len_results(best_mse, best_mae, sorted_results_mse, sorted
     print("【训练配置】")
     print(f"  Epochs:         {best_mse.get('epochs', 'N/A')}")
     print(f"  Patience:       {best_mse.get('patience', 'N/A')}")
-    print(f"  Seed:           {best_mse.get('seed', 'N/A')}")
+    print(f"  Seed:           {best_mse.get('seed', 'N/A')} ⭐")
     print("")
     print("【结果指标】")
     print(f"  Test MSE:       {best_mse.get('test_mse', 'N/A'):.6f}")
@@ -207,7 +240,7 @@ def print_single_pred_len_results(best_mse, best_mae, sorted_results_mse, sorted
     print("【训练配置】")
     print(f"  Epochs:         {best_mae.get('epochs', 'N/A')}")
     print(f"  Patience:       {best_mae.get('patience', 'N/A')}")
-    print(f"  Seed:           {best_mae.get('seed', 'N/A')}")
+    print(f"  Seed:           {best_mae.get('seed', 'N/A')} ⭐")
     print("")
     print("【结果指标】")
     print(f"  Test MSE:       {best_mae.get('test_mse', 'N/A'):.6f}")
@@ -427,13 +460,13 @@ def print_single_pred_len_results(best_mse, best_mae, sorted_results_mse, sorted
 def print_summary_table(results_by_pred_len, pred_lens=[96, 192, 336, 720]):
     """打印所有预测长度的汇总表格"""
     print("\n" + "="*80)
-    print("📊 所有预测长度的最佳结果汇总")
+    print("📊 所有预测长度的最佳结果汇总（跨所有种子）")
     print("="*80)
     
     # MSE 汇总（添加综合均值）
     print("\n【最小 MSE 汇总】")
-    print(f"{'Pred_Len':<12} {'Channel':<10} {'Dropout':<10} {'Head':<8} {'LR':<12} {'WD':<12} {'BS':<8} {'MSE':<15} {'MAE':<15}")
-    print("-"*100)
+    print(f"{'Pred_Len':<12} {'Seed':<8} {'Channel':<10} {'Dropout':<10} {'Head':<8} {'LR':<12} {'WD':<12} {'BS':<8} {'MSE':<15} {'MAE':<15}")
+    print("-"*110)
     
     mse_values = []
     mae_values = []
@@ -442,6 +475,7 @@ def print_summary_table(results_by_pred_len, pred_lens=[96, 192, 336, 720]):
         data = results_by_pred_len.get(pred_len, {})
         best_mse = data.get('best_mse')
         if best_mse:
+            seed = best_mse.get('seed', 'N/A')
             mse_val = best_mse.get('test_mse')
             mae_val = best_mse.get('test_mae')
             
@@ -450,26 +484,26 @@ def print_summary_table(results_by_pred_len, pred_lens=[96, 192, 336, 720]):
             if mae_val is not None:
                 mae_values.append(mae_val)
             
-            print(f"{pred_len:<12} {best_mse.get('channel', 'N/A'):<10} "
+            print(f"{pred_len:<12} {seed:<8} {best_mse.get('channel', 'N/A'):<10} "
                   f"{best_mse.get('dropout_n', 'N/A'):<10.1f} {best_mse.get('head', 'N/A'):<8} "
                   f"{best_mse.get('learning_rate', 'N/A'):<12} {best_mse.get('weight_decay', 'N/A'):<12} "
                   f"{best_mse.get('batch_size', 'N/A'):<8} "
                   f"{mse_val:<15.6f} {mae_val:<15.6f}")
         else:
-            print(f"{pred_len:<12} {'N/A':<10} {'N/A':<10} {'N/A':<8} {'N/A':<12} {'N/A':<12} {'N/A':<8} {'N/A':<15} {'N/A':<15}")
+            print(f"{pred_len:<12} {'N/A':<8} {'N/A':<10} {'N/A':<10} {'N/A':<8} {'N/A':<12} {'N/A':<12} {'N/A':<8} {'N/A':<15} {'N/A':<15}")
     
     # 显示综合均值
     if mse_values and mae_values:
         mse_avg = sum(mse_values) / len(mse_values)
         mae_avg = sum(mae_values) / len(mae_values)
-        print("-"*100)
-        print(f"{'综合均值':<12} {'':<10} {'':<10} {'':<8} {'':<12} {'':<12} {'':<8} "
+        print("-"*110)
+        print(f"{'综合均值':<12} {'':<8} {'':<10} {'':<10} {'':<8} {'':<12} {'':<12} {'':<8} "
               f"{mse_avg:<15.6f} {mae_avg:<15.6f}")
     
     # MAE 汇总（添加综合均值）
     print("\n【最小 MAE 汇总】")
-    print(f"{'Pred_Len':<12} {'Channel':<10} {'Dropout':<10} {'Head':<8} {'LR':<12} {'WD':<12} {'BS':<8} {'MSE':<15} {'MAE':<15}")
-    print("-"*100)
+    print(f"{'Pred_Len':<12} {'Seed':<8} {'Channel':<10} {'Dropout':<10} {'Head':<8} {'LR':<12} {'WD':<12} {'BS':<8} {'MSE':<15} {'MAE':<15}")
+    print("-"*110)
     
     mse_values_mae = []
     mae_values_mae = []
@@ -478,6 +512,7 @@ def print_summary_table(results_by_pred_len, pred_lens=[96, 192, 336, 720]):
         data = results_by_pred_len.get(pred_len, {})
         best_mae = data.get('best_mae')
         if best_mae:
+            seed = best_mae.get('seed', 'N/A')
             mse_val = best_mae.get('test_mse')
             mae_val = best_mae.get('test_mae')
             
@@ -486,29 +521,29 @@ def print_summary_table(results_by_pred_len, pred_lens=[96, 192, 336, 720]):
             if mae_val is not None:
                 mae_values_mae.append(mae_val)
             
-            print(f"{pred_len:<12} {best_mae.get('channel', 'N/A'):<10} "
+            print(f"{pred_len:<12} {seed:<8} {best_mae.get('channel', 'N/A'):<10} "
                   f"{best_mae.get('dropout_n', 'N/A'):<10.1f} {best_mae.get('head', 'N/A'):<8} "
                   f"{best_mae.get('learning_rate', 'N/A'):<12} {best_mae.get('weight_decay', 'N/A'):<12} "
                   f"{best_mae.get('batch_size', 'N/A'):<8} "
                   f"{mse_val:<15.6f} {mae_val:<15.6f}")
         else:
-            print(f"{pred_len:<12} {'N/A':<10} {'N/A':<10} {'N/A':<8} {'N/A':<12} {'N/A':<12} {'N/A':<8} {'N/A':<15} {'N/A':<15}")
+            print(f"{pred_len:<12} {'N/A':<8} {'N/A':<10} {'N/A':<10} {'N/A':<8} {'N/A':<12} {'N/A':<12} {'N/A':<8} {'N/A':<15} {'N/A':<15}")
     
     # 显示综合均值
     if mse_values_mae and mae_values_mae:
         mse_avg_mae = sum(mse_values_mae) / len(mse_values_mae)
         mae_avg_mae = sum(mae_values_mae) / len(mae_values_mae)
-        print("-"*100)
-        print(f"{'综合均值':<12} {'':<10} {'':<10} {'':<8} {'':<12} {'':<12} {'':<8} "
+        print("-"*110)
+        print(f"{'综合均值':<12} {'':<8} {'':<10} {'':<10} {'':<8} {'':<12} {'':<12} {'':<8} "
               f"{mse_avg_mae:<15.6f} {mae_avg_mae:<15.6f}")
 
 def main():
     """主函数"""
     import argparse
     
-    parser = argparse.ArgumentParser(description='检索 seed=2088 参数寻优实验的最佳参数组合（按预测长度分别分析）')
+    parser = argparse.ArgumentParser(description='检索 T3Time_FreTS_FusionExp 模型的所有种子的参数寻优实验结果（按预测长度分别分析）')
     parser.add_argument('--result_file', type=str, default=None, help='结果文件路径（默认: experiment_results.log）')
-    parser.add_argument('--seed', type=int, default=2088, help='随机种子')
+    parser.add_argument('--seed', type=int, default=None, help='随机种子（默认: None，分析所有种子）')
     parser.add_argument('--model_id_prefix', type=str, default='T3Time_FreTS_Gated_Qwen_Hyperopt', 
                        help='模型ID前缀')
     parser.add_argument('--pred_lens', type=int, nargs='+', default=[96, 192, 336, 720],
@@ -519,8 +554,11 @@ def main():
     results = load_hyperopt_results(args.result_file, args.seed, args.model_id_prefix)
     
     if not results:
-        print(f"\n❌ 未找到 seed={args.seed} 的参数寻优实验结果")
-        print("请先运行参数寻优脚本: bash scripts/T3Time_FreTS_FusionExp/hyperopt_seed2088.sh")
+        if args.seed is None:
+            print(f"\n❌ 未找到 {args.model_id_prefix} 模型的任何实验结果")
+        else:
+            print(f"\n❌ 未找到 seed={args.seed} 的参数寻优实验结果")
+        print("请先运行参数寻优脚本进行实验")
         return
     
     # 按预测长度分组分析
@@ -529,8 +567,8 @@ def main():
     # 打印汇总表格
     print_summary_table(results_by_pred_len, args.pred_lens)
     
-    # 打印每个预测长度的详细结果
-    # print_results_by_pred_len(results_by_pred_len, args.pred_lens)
+    # 打印每个预测长度的详细结果（传入所有结果用于种子统计）
+    # print_results_by_pred_len(results_by_pred_len, args.pred_lens, all_results=results)
     
     # print("\n" + "="*80)
     # print("分析完成！")

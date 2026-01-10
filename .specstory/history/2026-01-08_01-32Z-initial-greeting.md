@@ -4121,7 +4121,6 @@ _**Agent (model default, mode Agent)**_
 
 ---
 
-
 修改 `run_hyperopt_dual_gpu.sh`，在损失函数选项中添加 `smooth_l1`。
 
 
@@ -4139,7 +4138,6 @@ _**Agent (model default, mode Agent)**_
 
 ---
 
-
 检查 `hyperopt_pred720_seed2088_parallel.sh` 中的损失函数定义，确保两者一致：
 
 
@@ -4156,7 +4154,6 @@ _**Agent (model default, mode Agent)**_
 
 
 ---
-
 
 修改 `run_hyperopt_dual_gpu.sh`，将损失函数选项从 `mse` 改为包含 `mse` 和 `smooth_l1`：
 
@@ -4189,7 +4186,6 @@ Lines added: 1, lines removed: 1
 
 
 ---
-
 
 验证修改并检查脚本语法：
 
@@ -4320,7 +4316,6 @@ EOF
 
 ---
 
-
 已修改 `run_hyperopt_dual_gpu.sh`，在损失函数选项中添加了 `smooth_l1`。
 
 ## 修改内容
@@ -4366,7 +4361,6 @@ _**Agent (model default, mode Agent)**_
 
 
 ---
-
 
 分析 `run_hyperopt_dual_gpu.sh` 当前搜索的参数：
 
@@ -4654,7 +4648,6 @@ run_hyperopt_dual_gpu.sh 参数搜索空间分析
 
 ---
 
-
 ## 当前搜索的参数
 
 `run_hyperopt_dual_gpu.sh` 脚本搜索以下 7 个参数：
@@ -4723,7 +4716,6 @@ _**Agent (model default, mode Agent)**_
 
 ---
 
-
 检查 `pred_len` 的设置位置，以便修改：
 
 
@@ -4761,7 +4753,6 @@ Output mode: content
 
 ---
 
-
 检查 `pred_len` 的设置位置，并提供修改方法：
 
 
@@ -4786,7 +4777,6 @@ Output mode: content
 
 
 ---
-
 
 `pred_len` 在 `hyperopt_pred720_seed2088_parallel.sh` 中设置为 336。将其改为 720：
 
@@ -4827,7 +4817,6 @@ Lines added: 1, lines removed: 1
 
 
 ---
-
 
 已将 `pred_len` 从 336 改为 720。验证修改：
 
@@ -4871,7 +4860,6 @@ bash -n /root/0/T3Time/scripts/T3Time_FreTS_FusionExp/hyperopt_pred720_seed2088_
 
 ---
 
-
 已将 `pred_len` 从 336 改为 720。
 
 ## 修改内容
@@ -4914,7 +4902,6 @@ _**Agent (model default, mode Agent)**_
 
 
 ---
-
 
 检查 `run_hyperopt_dual_gpu.sh` 是否调用 `hyperopt_pred720_seed2088_parallel.sh`，并对比两者的参数配置：
 
@@ -5083,7 +5070,6 @@ EOF
 
 
 ---
-
 
 是的，`run_hyperopt_dual_gpu.sh` 会调用 `hyperopt_pred720_seed2088_parallel.sh`。
 
@@ -5258,7 +5244,6 @@ EOF
 
 ---
 
-
 修复参数不一致问题：将 `run_hyperopt_dual_gpu.sh` 的参数定义与 `hyperopt_pred720_seed2088_parallel.sh` 对齐。
 
 
@@ -5376,7 +5361,6 @@ GPU 1: 实验 [288, 575] (288 个)
 
 ---
 
-
 ## 回答
 
 是的，`run_hyperopt_dual_gpu.sh` 会调用 `hyperopt_pred720_seed2088_parallel.sh`。
@@ -5433,7 +5417,6 @@ _**Agent (model default, mode Agent)**_
 
 ---
 
-
 查找支持八卡并行的脚本：
 
 
@@ -5470,7 +5453,6 @@ Output mode: content
 
 
 ---
-
 
 支持八卡并行的脚本是：`hyperopt_seed2000_2100_pred720.sh`
 
@@ -5647,7 +5629,6 @@ EOF
 
 ---
 
-
 ## 答案
 
 支持八卡并行的脚本是：**`hyperopt_seed2000_2100_pred720.sh`**
@@ -5700,7 +5681,6 @@ _**Agent (model default, mode Agent)**_
 
 ---
 
-
 改进脚本，使其在指定参数空间搜索，并对每个参数组合在种子 2000-2100 范围内测试。查看当前脚本：
 
 
@@ -5717,7 +5697,6 @@ _**Agent (model default, mode Agent)**_
 
 
 ---
-
 
 修改脚本，使其在指定参数空间搜索，并对每个参数组合在种子 2000-2100 范围内测试：
 
@@ -6183,7 +6162,6 @@ EOF
 
 ---
 
-
 已改进脚本。主要变更如下：
 
 ## 改进内容
@@ -6237,7 +6215,6 @@ _**Agent (model default, mode Agent)**_
 
 
 ---
-
 
 分析脚本的执行顺序：
 
@@ -6403,7 +6380,6 @@ EOF
 
 
 ---
-
 
 ## 答案
 
@@ -6751,7 +6727,6 @@ _**Agent (model default, mode Agent)**_
 
 ---
 
-
 检查脚本中每张 GPU 的并行实验数设置：
 
 
@@ -6904,7 +6879,6 @@ EOF
 
 ---
 
-
 ## 答案
 
 每张 GPU 每次同时运行 1 个实验（默认值）。
@@ -6968,7 +6942,6 @@ _**Agent (model default, mode Agent)**_
 
 
 ---
-
 
 创建测试版本脚本，用于测试每张 GPU 最多可同时运行多少个实验：
 
@@ -7473,7 +7446,6 @@ EOF
 
 ---
 
-
 已创建测试脚本 `八卡寻优_测试并行数.sh`，用于测试每张 GPU 最多可同时运行多少个实验。
 
 ## 测试脚本特点
@@ -7551,7 +7523,6 @@ _**Agent (model default, mode Agent)**_
 
 
 ---
-
 
 分析当前 GPU 使用情况，并给出建议：
 
@@ -7806,7 +7777,6 @@ GPU使用情况分析
 
 ---
 
-
 ## 分析总结
 
 ### 当前状态
@@ -7882,7 +7852,6 @@ _**Agent (model default, mode Agent)**_
 
 
 ---
-
 
 将脚本的默认并行数从 1 改为 5：
 
@@ -8045,7 +8014,6 @@ EOF
 
 
 ---
-
 
 已将脚本的默认并行数从 1 改为 5。
 
@@ -10345,7 +10313,6 @@ _**Agent (model default, mode Agent)**_
 
 ---
 
-
 分析这2.3T空间的使用情况，找出占用最大的文件和目录：
 
 
@@ -10668,7 +10635,6 @@ EOF
 
 ---
 
-
 分析结果：容器内可见的占用很小，大部分数据在宿主机。继续分析：
 
 
@@ -10914,7 +10880,6 @@ du -sh /root/.cache/* 2>/dev/null | sort -hr | head -10
 
 ---
 
-
 ## 2.3T空间使用分析结果
 
 ### 重要发现
@@ -10983,6 +10948,357 @@ du -sh /* | sort -hr | head -20
 3. HuggingFace缓存: `rm -rf /root/.cache/huggingface/*` (可释放约1.9G，但会重新下载)
 
 总结：容器内可见约57G，其余约2.2T在宿主机，需要在宿主机上查看完整占用。
+
+---
+
+_**User (2026-01-09 10:40Z)**_
+
+如何在宿主机看哪些docker在运行
+
+---
+
+_**Agent (model default, mode Agent)**_
+
+
+
+---
+
+
+在宿主机上查看运行中的 Docker 容器，可用以下命令：
+
+
+---
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_cmd">
+<details><summary>Tool use: **run_terminal_cmd** • Run command: python3 << 'EOF'
+print("=" * 70)
+print("在宿主机查看Docker容器运行状态")
+print("=" * 70)
+
+print("\n【基本命令】")
+print("  1. 查看所有运行中的容器：")
+print("     docker ps")
+print("")
+print("  2. 查看所有容器（包括已停止的）：")
+print("     docker ps -a")
+print("")
+print("  3. 查看容器详细信息：")
+print("     docker ps --format \"table {{.ID}}\\t{{.Names}}\\t{{.Status}}\\t{{.Image}}\"")
+print("")
+print("  4. 查看容器资源使用情况：")
+print("     docker stats")
+print("")
+print("  5. 查看特定容器的详细信息：")
+print("     docker inspect <container_id>")
+
+print("\n【常用组合命令】")
+print("  1. 查看容器名称、状态、镜像：")
+print("     docker ps --format \"table {{.Names}}\\t{{.Status}}\\t{{.Image}}\"")
+print("")
+print("  2. 查看容器ID和名称：")
+print("     docker ps --format \"{{.ID}}\\t{{.Names}}\"")
+print("")
+print("  3. 统计容器数量：")
+print("     docker ps -q | wc -l  # 运行中的容器数")
+print("     docker ps -a -q | wc -l  # 所有容器数")
+
+print("\n【查看容器资源占用】")
+print("  1. 实时监控容器资源：")
+print("     docker stats")
+print("")
+print("  2. 查看容器磁盘占用：")
+print("     docker system df")
+print("")
+print("  3. 查看详细磁盘占用：")
+print("     docker system df -v")
+
+print("\n【查看容器日志】")
+print("  1. 查看容器日志：")
+print("     docker logs <container_id>")
+print("")
+print("  2. 实时查看日志：")
+print("     docker logs -f <container_id>")
+print("")
+print("  3. 查看最近100行日志：")
+print("     docker logs --tail 100 <container_id>")
+
+print("\n【根据当前容器信息】")
+print("  从容器内可以看到：")
+print("    - 容器ID可能包含: 62634a248ab59ef1aabf97b6a828d9382029ac1eb3b122e18524bf57d6c20814")
+print("    - 在宿主机上可以用以下命令查找：")
+print("      docker ps | grep 62634a248ab5")
+print("      或")
+print("      docker ps -a | grep 62634a248ab5")
+
+print("\n【完整示例】")
+print("  # 查看所有运行中的容器")
+print("  docker ps")
+print("")
+print("  # 查看所有容器（包括停止的）")
+print("  docker ps -a")
+print("")
+print("  # 查看容器资源使用")
+print("  docker stats --no-stream")
+print("")
+print("  # 查看Docker磁盘占用")
+print("  docker system df")
+
+print("\n" + "=" * 70)
+EOF
+</summary>
+
+```bash
+python3 << 'EOF'
+print("=" * 70)
+print("在宿主机查看Docker容器运行状态")
+print("=" * 70)
+
+print("\n【基本命令】")
+print("  1. 查看所有运行中的容器：")
+print("     docker ps")
+print("")
+print("  2. 查看所有容器（包括已停止的）：")
+print("     docker ps -a")
+print("")
+print("  3. 查看容器详细信息：")
+print("     docker ps --format \"table {{.ID}}\\t{{.Names}}\\t{{.Status}}\\t{{.Image}}\"")
+print("")
+print("  4. 查看容器资源使用情况：")
+print("     docker stats")
+print("")
+print("  5. 查看特定容器的详细信息：")
+print("     docker inspect <container_id>")
+
+print("\n【常用组合命令】")
+print("  1. 查看容器名称、状态、镜像：")
+print("     docker ps --format \"table {{.Names}}\\t{{.Status}}\\t{{.Image}}\"")
+print("")
+print("  2. 查看容器ID和名称：")
+print("     docker ps --format \"{{.ID}}\\t{{.Names}}\"")
+print("")
+print("  3. 统计容器数量：")
+print("     docker ps -q | wc -l  # 运行中的容器数")
+print("     docker ps -a -q | wc -l  # 所有容器数")
+
+print("\n【查看容器资源占用】")
+print("  1. 实时监控容器资源：")
+print("     docker stats")
+print("")
+print("  2. 查看容器磁盘占用：")
+print("     docker system df")
+print("")
+print("  3. 查看详细磁盘占用：")
+print("     docker system df -v")
+
+print("\n【查看容器日志】")
+print("  1. 查看容器日志：")
+print("     docker logs <container_id>")
+print("")
+print("  2. 实时查看日志：")
+print("     docker logs -f <container_id>")
+print("")
+print("  3. 查看最近100行日志：")
+print("     docker logs --tail 100 <container_id>")
+
+print("\n【根据当前容器信息】")
+print("  从容器内可以看到：")
+print("    - 容器ID可能包含: 62634a248ab59ef1aabf97b6a828d9382029ac1eb3b122e18524bf57d6c20814")
+print("    - 在宿主机上可以用以下命令查找：")
+print("      docker ps | grep 62634a248ab5")
+print("      或")
+print("      docker ps -a | grep 62634a248ab5")
+
+print("\n【完整示例】")
+print("  # 查看所有运行中的容器")
+print("  docker ps")
+print("")
+print("  # 查看所有容器（包括停止的）")
+print("  docker ps -a")
+print("")
+print("  # 查看容器资源使用")
+print("  docker stats --no-stream")
+print("")
+print("  # 查看Docker磁盘占用")
+print("  docker system df")
+
+print("\n" + "=" * 70)
+EOF
+
+```
+
+```
+======================================================================
+在宿主机查看Docker容器运行状态
+======================================================================
+
+【基本命令】
+  1. 查看所有运行中的容器：
+     docker ps
+
+  2. 查看所有容器（包括已停止的）：
+     docker ps -a
+
+  3. 查看容器详细信息：
+     docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Image}}"
+
+  4. 查看容器资源使用情况：
+     docker stats
+
+  5. 查看特定容器的详细信息：
+     docker inspect &lt;container_id&gt;
+
+【常用组合命令】
+  1. 查看容器名称、状态、镜像：
+     docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Image}}"
+
+  2. 查看容器ID和名称：
+     docker ps --format "{{.ID}}\t{{.Names}}"
+
+  3. 统计容器数量：
+     docker ps -q | wc -l  # 运行中的容器数
+     docker ps -a -q | wc -l  # 所有容器数
+
+【查看容器资源占用】
+  1. 实时监控容器资源：
+     docker stats
+
+  2. 查看容器磁盘占用：
+     docker system df
+
+  3. 查看详细磁盘占用：
+     docker system df -v
+
+【查看容器日志】
+  1. 查看容器日志：
+     docker logs &lt;container_id&gt;
+
+  2. 实时查看日志：
+     docker logs -f &lt;container_id&gt;
+
+  3. 查看最近100行日志：
+     docker logs --tail 100 &lt;container_id&gt;
+
+【根据当前容器信息】
+  从容器内可以看到：
+    - 容器ID可能包含: 62634a248ab59ef1aabf97b6a828d9382029ac1eb3b122e18524bf57d6c20814
+    - 在宿主机上可以用以下命令查找：
+      docker ps | grep 62634a248ab5
+      或
+      docker ps -a | grep 62634a248ab5
+
+【完整示例】
+  # 查看所有运行中的容器
+  docker ps
+
+  # 查看所有容器（包括停止的）
+  docker ps -a
+
+  # 查看容器资源使用
+  docker stats --no-stream
+
+  # 查看Docker磁盘占用
+  docker system df
+
+======================================================================
+
+```
+</details>
+</tool-use>
+
+---
+
+
+
+---
+
+
+## 在宿主机查看 Docker 容器运行状态
+
+### 基本命令
+
+**1. 查看所有运行中的容器：**
+```bash
+docker ps
+```
+
+**2. 查看所有容器（包括已停止的）：**
+```bash
+docker ps -a
+```
+
+**3. 查看容器详细信息（格式化输出）：**
+```bash
+docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Image}}"
+```
+
+**4. 查看容器资源使用情况：**
+```bash
+docker stats
+# 或一次性显示（不持续更新）
+docker stats --no-stream
+```
+
+### 常用组合命令
+
+**查看容器名称、状态、镜像：**
+```bash
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Image}}"
+```
+
+**统计容器数量：**
+```bash
+docker ps -q | wc -l        # 运行中的容器数
+docker ps -a -q | wc -l     # 所有容器数
+```
+
+### 查看容器资源占用
+
+**1. 查看 Docker 磁盘占用：**
+```bash
+docker system df
+```
+
+**2. 查看详细磁盘占用：**
+```bash
+docker system df -v
+```
+
+**3. 查看 overlay2 目录占用（2.3T的主要来源）：**
+```bash
+du -sh /mnt/disk/docker/overlay2/* | sort -hr | head -20
+```
+
+### 根据当前容器查找
+
+从容器内信息可以看到容器ID包含：`62634a248ab59ef1aabf97b6a828d9382029ac1eb3b122e18524bf57d6c20814`
+
+在宿主机上可以用：
+```bash
+docker ps | grep 62634a248ab5
+# 或
+docker ps -a | grep 62634a248ab5
+```
+
+### 完整示例
+
+```bash
+# 查看所有运行中的容器
+docker ps
+
+# 查看所有容器（包括停止的）
+docker ps -a
+
+# 查看容器资源使用（一次性）
+docker stats --no-stream
+
+# 查看Docker磁盘占用
+docker system df
+
+# 查看详细的磁盘占用（包括每个容器、镜像、卷）
+docker system df -v
+```
+
+这些命令需要在宿主机上执行，而不是在容器内部。
 
 ---
 

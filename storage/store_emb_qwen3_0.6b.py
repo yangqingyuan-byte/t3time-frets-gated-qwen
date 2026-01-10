@@ -56,9 +56,28 @@ def get_dataset(data_path, flag, input_len, output_len):
         "ETTm2": Dataset_ETT_minute,
     }
     dataset_class = datasets.get(data_path, Dataset_Custom)
-    return dataset_class(
-        flag=flag, size=[input_len, 0, output_len], data_path=data_path
-    )
+    
+    # 获取项目根目录
+    CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+    PROJECT_ROOT = os.path.dirname(CURRENT_DIR)
+    root_path = os.path.join(PROJECT_ROOT, "dataset")
+    
+    # 对于所有数据集，都传递正确的 root_path
+    if dataset_class == Dataset_Custom:
+        return dataset_class(
+            root_path=root_path,
+            flag=flag, 
+            size=[input_len, 0, output_len], 
+            data_path=data_path
+        )
+    else:
+        # ETT 数据集也需要传递 root_path
+        return dataset_class(
+            root_path=root_path,
+            flag=flag, 
+            size=[input_len, 0, output_len], 
+            data_path=data_path
+        )
 
 
 def save_embeddings(args):
