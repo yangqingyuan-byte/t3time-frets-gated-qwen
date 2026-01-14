@@ -31,7 +31,8 @@ mkdir -p "${LOG_DIR}"
 # 固定参数
 DATA_PATH="ETTh2"
 SEQ_LEN=96
-PRED_LEN=192
+# 支持多个预测长度，依次运行
+PRED_LENS=(96 336 720)
 E_LAYER=1
 D_LAYER=1
 EPOCHS=150
@@ -153,7 +154,7 @@ echo "=========================================="
 echo "T3Time_FreTS_Gated_Qwen 超参数+多种子寻优"
 echo "GPU: ${GPU_ID}, 实验范围: [${START_IDX}, ${END_IDX}] / ${total_exps}"
 echo "并行数: ${PARALLEL}"
-echo "Pred_Len: ${PRED_LEN}"
+echo "Pred_Lens: ${PRED_LENS[@]}"
 echo ""
 echo "参数搜索空间:"
 echo "  Channel: ${CHANNELS[@]}"
@@ -178,40 +179,46 @@ run_experiment() {
     
     IFS='|' read -r CHANNEL DROPOUT_N HEAD LEARNING_RATE WEIGHT_DECAY LOSS_FN BATCH_SIZE SEED <<< "${exp_config}"
     
-    log_file="${LOG_DIR}/pred${PRED_LEN}_c${CHANNEL}_d${DROPOUT_N}_h${HEAD}_lr${LEARNING_RATE}_wd${WEIGHT_DECAY}_loss${LOSS_FN}_bs${BATCH_SIZE}_seed${SEED}.log"
-    
     echo "[实验 ${exp_idx}/${total_exps}] GPU${gpu_id} 开始..."
     echo "  Channel: ${CHANNEL}, Dropout: ${DROPOUT_N}, Head: ${HEAD}"
     echo "  LR: ${LEARNING_RATE}, WD: ${WEIGHT_DECAY}, Loss: ${LOSS_FN}, BS: ${BATCH_SIZE}"
     echo "  Seed: ${SEED}"
-    
-    python /root/0/T3Time/train_frets_gated_qwen.py \
-        --data_path "${DATA_PATH}" \
-        --batch_size "${BATCH_SIZE}" \
-        --seq_len "${SEQ_LEN}" \
-        --pred_len "${PRED_LEN}" \
-        --epochs "${EPOCHS}" \
-        --es_patience "${PATIENCE}" \
-        --seed "${SEED}" \
-        --channel "${CHANNEL}" \
-        --learning_rate "${LEARNING_RATE}" \
-        --dropout_n "${DROPOUT_N}" \
-        --weight_decay "${WEIGHT_DECAY}" \
-        --e_layer "${E_LAYER}" \
-        --d_layer "${D_LAYER}" \
-        --head "${HEAD}" \
-        --loss_fn "${LOSS_FN}" \
-        --lradj "${LRADJ}" \
-        --embed_version "${EMBED_VERSION}" \
-        --model_id "${MODEL_ID}" \
-        > "${log_file}" 2>&1
-    
-    exit_code=$?
-    if [ $exit_code -eq 0 ]; then
-        echo "  ✅ GPU${gpu_id} 实验 ${exp_idx} 完成"
-    else
-        echo "  ⚠️  GPU${gpu_id} 实验 ${exp_idx} 失败 (退出码: ${exit_code})"
-    fi
+    echo "  将依次运行预测长度: ${PRED_LENS[@]}"
+
+    # 依次在多个预测长度上运行
+    for PRED_LEN in "${PRED_LENS[@]}"; do
+        log_file="${LOG_DIR}/pred${PRED_LEN}_c${CHANNEL}_d${DROPOUT_N}_h${HEAD}_lr${LEARNING_RATE}_wd${WEIGHT_DECAY}_loss${LOSS_FN}_bs${BATCH_SIZE}_seed${SEED}.log"
+        echo "    -> 开始 Pred_Len=${PRED_LEN} ..."
+        python /root/0/T3Time/train_frets_gated_qwen.py \
+            --data_path "${DATA_PATH}" \
+            --batch_size "${BATCH_SIZE}" \
+            --seq_len "${SEQ_LEN}" \
+            --pred_len "${PRED_LEN}" \
+            --epochs "${EPOCHS}" \
+            --es_patience "${PATIENCE}" \
+            --seed "${SEED}" \
+            --channel "${CHANNEL}" \
+            --learning_rate "${LEARNING_RATE}" \
+            --dropout_n "${DROPOUT_N}" \
+            --weight_decay "${WEIGHT_DECAY}" \
+            --e_layer "${E_LAYER}" \
+            --d_layer "${D_LAYER}" \
+            --head "${HEAD}" \
+            --loss_fn "${LOSS_FN}" \
+            --lradj "${LRADJ}" \
+            --embed_version "${EMBED_VERSION}" \
+            --model_id "${MODEL_ID}" \
+            > "${log_file}" 2>&1
+        
+        exit_code=$?
+        if [ $exit_code -eq 0 ]; then
+            echo "    ✅ Pred_Len=${PRED_LEN} 完成"
+        else
+            echo "    ⚠️ Pred_Len=${PRED_LEN} 失败 (退出码: ${exit_code})"
+        fi
+    done
+
+    echo "  ✅ GPU${gpu_id} 实验 ${exp_idx} 的所有预测长度已运行完毕"
 }
 
 # 并行运行实验
@@ -247,3 +254,17 @@ echo "=========================================="
 echo "结果已追加到: ${RESULT_LOG}"
 echo "日志文件保存在: ${LOG_DIR}"
 echo ""
+
+# 发送微信通知（如果配置了 SENDKEY 环境变量）
+if [ -n "${SENDKEY:-}" ] || [ -n "${QYWX_CORPID:-}" ]; then
+    echo "正在发送完成通知..."
+    python /root/0/T3Time/notify_wechat.py \
+        --title "ETTh2 八卡寻优完成 (GPU${GPU_ID})" \
+        --body "✅ 所有实验已完成
+
+数据集: ETTh2
+GPU: ${GPU_ID}
+实验范围: [${START_IDX}, ${END_IDX}] / ${total_exps}
+完成时间: $(date '+%Y-%m-%d %H:%M:%S')
+日志目录: ${LOG_DIR}" || echo "通知发送失败（不影响实验结果）"
+fi

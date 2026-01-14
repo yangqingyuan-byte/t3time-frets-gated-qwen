@@ -15,7 +15,8 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-def load_hyperopt_results(result_file=None, seed=None, model_id_prefix="T3Time_FreTS_Gated_Qwen_Hyperopt"):
+def load_hyperopt_results(result_file=None, seed=None, model_id_prefix="T3Time_FreTS_Gated_Qwen_Hyperopt",
+                          data_path=None):
     """
     加载参数寻优实验结果
     
@@ -23,6 +24,7 @@ def load_hyperopt_results(result_file=None, seed=None, model_id_prefix="T3Time_F
         result_file: 结果文件路径，默认为 experiment_results.log
         seed: 随机种子，如果为 None 则加载所有种子的结果
         model_id_prefix: 模型ID前缀
+        data_path: 数据集名称（例如 'ETTh1'）。如果为 None 则不过滤数据集。
     """
     if result_file is None:
         result_file = os.path.join(project_root, "experiment_results.log")
@@ -40,10 +42,19 @@ def load_hyperopt_results(result_file=None, seed=None, model_id_prefix="T3Time_F
             try:
                 data = json.loads(line.strip())
                 # 检查是否是参数寻优实验结果
-                if data.get('model_id', '').startswith(model_id_prefix):
-                    # 如果指定了 seed，则只加载该 seed 的结果；否则加载所有 seed
-                    if seed is None or data.get('seed') == seed:
-                        results.append(data)
+                if not data.get('model_id', '').startswith(model_id_prefix):
+                    continue
+
+                # 如果指定了数据集，则只保留该数据集的结果
+                if data_path is not None:
+                    # 部分日志可能使用 'data' 或 'data_path' 作为键，这里统一兼容
+                    log_data_path = data.get('data_path', data.get('data'))
+                    if log_data_path != data_path:
+                        continue
+
+                # 如果指定了 seed，则只加载该 seed 的结果；否则加载所有 seed
+                if seed is None or data.get('seed') == seed:
+                    results.append(data)
             except json.JSONDecodeError as e:
                 continue
             except Exception as e:
@@ -541,17 +552,30 @@ def main():
     """主函数"""
     import argparse
     
-    parser = argparse.ArgumentParser(description='检索 T3Time_FreTS_FusionExp 模型的所有种子的参数寻优实验结果（按预测长度分别分析）')
-    parser.add_argument('--result_file', type=str, default=None, help='结果文件路径（默认: experiment_results.log）')
-    parser.add_argument('--seed', type=int, default=None, help='随机种子（默认: None，分析所有种子）')
-    parser.add_argument('--model_id_prefix', type=str, default='T3Time_FreTS_Gated_Qwen_Hyperopt', 
-                       help='模型ID前缀')
-    parser.add_argument('--pred_lens', type=int, nargs='+', default=[96, 192, 336, 720],
-                       help='要分析的预测长度列表（默认: 96 192 336 720）')
+    parser = argparse.ArgumentParser(
+        description='检索 T3Time_FreTS_FusionExp 模型的所有种子的参数寻优实验结果（按预测长度分别分析）'
+    )
+    parser.add_argument('--result_file', type=str, default=None,
+                        help='结果文件路径（默认: experiment_results.log）')
+    parser.add_argument('--seed', type=int, default=None,
+                        help='随机种子（默认: None，分析所有种子）')
+    parser.add_argument('--model_id_prefix', type=str,
+                        default='T3Time_FreTS_Gated_Qwen_Hyperopt',
+                        help='模型ID前缀')
+    parser.add_argument('--pred_lens', type=int, nargs='+',
+                        default=[96, 192, 336, 720],
+                        help='要分析的预测长度列表（默认: 96 192 336 720）')
+    parser.add_argument('--data_path', type=str, default='ETTh1',
+                        help='数据集名称（默认: ETTh1；例如: ETTh1, ETTh2, ETTm1, ETTm2）')
     
     args = parser.parse_args()
     
-    results = load_hyperopt_results(args.result_file, args.seed, args.model_id_prefix)
+    results = load_hyperopt_results(
+        result_file=args.result_file,
+        seed=args.seed,
+        model_id_prefix=args.model_id_prefix,
+        data_path=args.data_path,
+    )
     
     if not results:
         if args.seed is None:
