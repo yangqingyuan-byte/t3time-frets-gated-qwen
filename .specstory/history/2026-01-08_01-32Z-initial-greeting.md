@@ -23289,8 +23289,7 @@ cd /root/0/T3Time && git remote -v
 ```
 
 ```
-origin	https://yangqingyuan-byte:gub.com/yangqingyuan-byte/t3time-frets-gated-qwen.git (fetch)
-origin	https://yangqingyuan-bythub.com/yangqingyuan-byte/t3time-frets-gated-qwen.git (push)
+
 
 ```
 </details>
@@ -23791,12 +23790,7 @@ GH013: Repository rule violations found for refs/heads/master.
 ...
 Push cannot contain secrets
 ...
-GitHub Personal Access Token
-  locations:
-    - commit: 67236aed56249325fbb5071d2f52f4e2a1f7004b
-      path: .specstory/history/2026-01-08_01-32Z-initial-greeting.md:23292
-    - commit: 67236aed56249325fbb5071d2f52f4e2a1f7004b
-      path: .specstory/history/2026-01-08_01-32Z-initial-greeting.md:23293
+
 ```
 
 说明在这个文件里：
